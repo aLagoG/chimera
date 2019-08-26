@@ -1,2 +1,2 @@
 # chimera
-Final project for compiler design class
+Final and only project for compiler design class
