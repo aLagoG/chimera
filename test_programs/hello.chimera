@@ -1,0 +1,9 @@
+/* File: hello.chimera
+ * Prints "Hello, World!" in the screen.
+ * (C) 2019 Ariel Ortiz, ITESM CEM
+ */
+
+program                     // The start of the program.
+    WrStr("Hello, World!"); // A simple message.
+    WrLn();                 // Don't forget to write a newline.
+end;                        // The end of the program.

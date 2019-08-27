@@ -1,0 +1,70 @@
+/* File: factorial.chimera
+ * Computes factorials using iteration and recursion.
+ * (C) 2019 Ariel Ortiz, ITESM CEM
+ */
+
+var
+    option: string;
+    num: integer;
+
+procedure IterativeFactorial(
+        n: integer;
+    ): integer;
+
+    var
+        i, r: integer;
+
+    begin
+        r := 1;
+        i := 2;
+
+        loop
+            if i > n then exit; end;
+            r := r * i;
+            i := i + 1;
+        end;
+
+        return r;
+    end;
+
+procedure RecursiveFactorial(
+        n: integer;
+    ):integer;
+
+    begin
+        if n <= 1 then
+            return 1;
+        else
+            return n * RecursiveFactorial(n - 1);
+        end;
+    end;
+
+program
+    loop
+        WrStr("Input a number: ");
+        num := RdInt();
+
+        WrStr("Iterative factorial: ");
+        WrInt(IterativeFactorial(num));
+
+        WrLn();
+
+        WrStr("Recursive factorial: ");
+        WrInt(RecursiveFactorial(num));
+
+        WrLn();
+
+        WrStr("Compute another factorial? ");
+        option := RdStr();
+
+        if LenStr(option) = 0 then
+            option := "N";
+        else
+            option := AtStr(option, 0);
+        end;
+
+        if CmpStr(option, "Y") <> 0 and CmpStr(option, "y") <> 0 then
+            exit;
+        end;
+    end;
+end;

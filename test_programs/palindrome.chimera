@@ -1,0 +1,58 @@
+/* File: palindrome.chimera
+ * Determines if a string is a palindrome.
+ * (C) 2019 Ariel Ortiz, ITESM CEM
+ */
+
+var
+    str, option: string;
+
+procedure IsPalindrome(
+        str: string;
+    ): boolean;
+
+    var
+        start, finish: integer;
+
+    begin
+        start := 0;
+        finish := LenStr(str) - 1;
+
+        loop
+            if start > finish then exit; end;
+            if CmpStr(AtStr(str, start), AtStr(str, finish)) <> 0 then
+                return false;
+            end;
+            start := start + 1;
+            finish := finish - 1;
+        end;
+
+        return true;
+    end;
+
+program
+    loop
+        WrStr("Input a string: ");
+        str := RdStr();
+
+        if IsPalindrome(str) then
+            WrStr(CatStr("The string """, CatStr(str, """ is a palindrome.")));
+        else
+            WrStr(CatStr("The string """, CatStr(str, """ is NOT a palindrome.")));
+        end;
+
+        WrLn();
+
+        WrStr("Check another string? ");
+        option := RdStr();
+
+        if LenStr(option) = 0 then
+            option := "N";
+        else
+            option := AtStr(option, 0);
+        end;
+
+        if CmpStr(option, "Y") <> 0 and CmpStr(option, "y") <> 0 then
+            exit;
+        end;
+    end;
+end;

@@ -1,0 +1,54 @@
+/* File: variables.chimera
+ * Using variables and constants with different scopes.
+ * (C) 2019 Ariel Ortiz, ITESM CEM
+ */
+
+const
+    konstant := 1;
+
+var
+    x, y: integer;
+
+procedure F(
+        b: boolean;
+        z: integer;
+    );
+
+    const
+        konstant := 1000;
+
+    var
+        x: integer;
+
+    begin
+        WrBool(b);
+        WrLn();
+        WrInt(z);
+        WrLn();
+
+        x := x + konstant;
+        y := y + konstant;
+        WrInt(x);
+        WrLn();
+        WrInt(y);
+        WrLn();
+    end;
+
+procedure G();
+
+    var
+        y: integer;
+
+    begin
+        x := x + konstant;
+        y := y + konstant;
+        WrInt(x);
+        WrLn();
+        WrInt(y);
+        WrLn();
+        F(false, 5);
+    end;
+
+program
+    G();
+end;

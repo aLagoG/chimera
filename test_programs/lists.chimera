@@ -1,0 +1,129 @@
+/* File: lists.chimera
+ * Implementation of typical list operations.
+ * (C) 2019 Ariel Ortiz, ITESM CEM
+ */
+
+var
+    lst: list of integer;
+    one, two: integer;
+    s: string;
+
+procedure Print(
+        lst: list of integer;
+    );
+
+    var
+        i: integer;
+        first: boolean;
+
+    begin
+        first := true;
+        WrStr("{");
+        for i in lst do
+            if first then
+                first := false;
+            else
+                WrStr(", ");
+            end;
+            WrInt(i);
+        end;
+        WrStr("}");
+    end;
+
+procedure Sum(
+        lst: list of integer;
+    ): integer;
+
+    var
+        i, sum: integer;
+
+    begin
+        sum := 0;
+
+        for i in lst do
+            sum := sum + i;
+        end;
+
+        return sum;
+    end;
+
+procedure Max(
+        lst: list of integer;
+    ): integer;
+
+    var
+        largest, i, n: integer;
+
+    begin
+        n := LenLstInt(lst);
+
+        if n = 0 then
+            return 0;
+        end;
+
+        largest := lst[0];
+
+        i := 1;
+
+        loop
+            if not(i < n) then
+                exit;
+            elseif lst[i] > largest then
+                largest := lst[i];
+            end;
+            i := i + 1;
+        end;
+
+        return largest;
+    end;
+
+procedure BubbleSort(
+        lst: list of integer;
+    );
+
+    var
+        i, j, t, n: integer;
+        swap :boolean;
+
+    begin
+        n := LenLstInt(lst);
+        i := 0;
+        loop
+            if i = n - 1 then exit; end;
+            swap := false;
+            j := 0;
+            loop
+                if j = n - i - 1 then
+                    exit;
+                elseif lst[j+1] < lst[j] then
+                    t := lst[j];
+                    lst[j] := lst[j+1];
+                    lst[j+1] := t;
+                    swap := true;
+                end;
+                j := j + 1;
+            end;
+            if not swap then exit; end;
+            i := i + 1;
+        end;
+    end;
+
+program
+    lst := {
+        73, 77, 56, 10, 14,
+        54, 75, 62, 71, 10,
+         3, 71, 16, 49, 66,
+        91, 69, 62, 25, 65
+    };
+    Print(lst);
+    WrLn();
+    one := Sum(lst);
+    two := Max(lst);
+    WrInt(one);
+    WrLn();
+    WrInt(two);
+    WrLn();
+    BubbleSort(lst);
+    Print(lst);
+    WrLn();
+end;

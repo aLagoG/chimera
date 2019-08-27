@@ -1,0 +1,58 @@
+/* File: binary.chimera
+ * Converts numbers into binary.
+ * (C) 2019 Ariel Ortiz, ITESM CEM
+ */
+
+var
+    option: string;
+    num: integer;
+
+procedure Binary(
+        num: integer;
+    ): string;
+
+    var
+        result: string;
+        remainder: integer;
+
+    begin
+        if num <= 0 then
+            return "0";
+        end;
+
+        result := "";
+
+        loop
+            remainder := num rem 2;
+            result := CatStr(IntToStr(remainder), result);
+            num := num div 2;
+            if num = 0 then exit; end;
+        end;
+
+        return result;
+    end;
+
+program
+    loop
+        WrStr("Input a number: ");
+        num := RdInt();
+
+        WrStr("Conversion to binary of that number: ");
+        WrStr(Binary(num));
+
+        WrLn();
+
+        WrStr("Convert another number? ");
+        option := RdStr();
+
+        if LenStr(option) = 0 then
+            option := "N";
+        else
+            option := AtStr(option, 0);
+        end;
+
+        if CmpStr(option, "Y") <> 0 and CmpStr(option, "y") <> 0 then
+            exit;
+        end;
+    end;
+end;
