@@ -20,27 +20,33 @@ namespace Chimera {
 
         static readonly Regex regex = new Regex(
             @" 
-                (?<Comment>    //.*      )     # Single Line comment
-                | (?<Comment>    \/\*(.|[\r\n])*\*\/  )     # Multiple Line comment
-                | (?<Identifier>  \w+      )
-                | (?<EndOfExpression>    [;]      )
-                | (?<Assign>    :=      )
-                | (?<Comma>    [,]      )
-                | (?<Declare>    [:]      )
-                | (?<ParOpen>    [(]       )
-                | (?<ParClose>   [)]       )
-                | (?<CurOpen>    [{]       )
-                | (?<CurClose>   [}]       )
-                | (?<BracketOpen>    [[]       )
-                | (?<BracketClose>   []]       )
-                | (?<Plus>       [+]       )  
-                | (?<Minus>       [-]       )
-                | (?<Equal>       [=]       )  
-                | (?<Unequal>    <>       )
-                | (?<LessThan>    [<]       )
-                | (?<Newline>    \n        )
-                | (?<WhiteSpace> \s        )     # Must go anywhere after Newline.
-                | (?<Other>      .         )     # Must be last: match any other character.
+                (?<String>        "".*""    )
+                | (?<Comment>         //.*      )     # Single Line comment
+                | (?<Comment>       \/\*(.|[\r\n])*\*\/  )  # Multiple Line comment
+                | (?<Identifier>    [a-zA-Z_]\w*      )
+                | (?<IntLiteral>    [\d]+[\s]     )
+                | (?<EndOfExpr>     [;]       )
+                | (?<Assign>        :=        )
+                | (?<Comma>         [,]       )
+                | (?<Declare>       [:]       )
+                | (?<ParOpen>       [(]       )
+                | (?<ParClose>      [)]       )
+                | (?<CurOpen>       [{]       )
+                | (?<CurClose>      [}]       )
+                | (?<BracketOpen>   [[]       )
+                | (?<BracketClose>  []]       )
+                | (?<Plus>          [+]       )  
+                | (?<Minus>         [-]       )
+                | (?<Multi>         [*]       )
+                | (?<LessEqualThan> <=        )
+                | (?<MoreEqualThan> >=        )
+                | (?<Equal>         [=]       )  
+                | (?<Unequal>       <>        )
+                | (?<LessThan>      [<]       )
+                | (?<MoreThan>      [>]       )
+                | (?<Newline>       \n        )
+                | (?<WhiteSpace>    \s        )     # Must go anywhere after Newline.
+                | (?<Other>         .         )     # Must be last: match any other character.
             ", 
             RegexOptions.IgnorePatternWhitespace 
                 | RegexOptions.Compiled
@@ -67,18 +73,22 @@ namespace Chimera {
                 {"for", TokenCategory.FOR},
                 {"in", TokenCategory.IN},
                 {"do", TokenCategory.DO},
-                {"loop", TokenCategory.LOOP},
                 {"return", TokenCategory.RETURN},
                 {"exit", TokenCategory.EXIT},
                 {"and", TokenCategory.AND},
                 {"or", TokenCategory.OR},
                 {"xor", TokenCategory.XOR},
-
+                {"div", TokenCategory.DIV},
+                {"rem", TokenCategory.REM},
+                {"not", TokenCategory.NOT},
+                {"true", TokenCategory.TRUE},
+                {"false", TokenCategory.FALSE},
             };
 
         static readonly IDictionary<string, TokenCategory> nonKeywords =
             new Dictionary<string, TokenCategory>() {
-                {"EndOfExpression", TokenCategory.END_OF_EXPRESSION},
+                {"EndOfExpr", TokenCategory.END_OF_EXPRESSION},
+                {"String", TokenCategory.STRING},
                 {"Assign", TokenCategory.ASSIGN},
                 {"Comma", TokenCategory.COMMA},    
                 {"Declare", TokenCategory.DECLARE},
@@ -90,6 +100,14 @@ namespace Chimera {
                 {"BracketClose", TokenCategory.BRACKET_CLOSE},
                 {"Equal", TokenCategory.EQUAL},
                 {"Unequal", TokenCategory.UNEQUAL},
+                {"LessEqualThan", TokenCategory.LESS_EQUAL_THAN},
+                {"MoreEqualThan", TokenCategory.MORE_EQUAL_THAN},
+                {"LessThan", TokenCategory.LESS_THAN},
+                {"MoreThan", TokenCategory.MORE_THAN},
+                {"Plus", TokenCategory.PLUS},
+                {"Minus", TokenCategory.MINUS},
+                {"Multi", TokenCategory.MULTI},
+                {"IntLiteral", TokenCategory.INT_LITERAL}
             };
 
         public Scanner(string input) {

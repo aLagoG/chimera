@@ -22,6 +22,7 @@ namespace Chimera {
         ASSIGN,
         END,
         INTEGER,
+        INT_LITERAL,
         BOOLEAN,
         STRING,
         LIST,
@@ -49,8 +50,18 @@ namespace Chimera {
         XOR,
         EQUAL,
         UNEQUAL,
-        
-
+        LESS_THAN,
+        MORE_THAN,
+        LESS_EQUAL_THAN,
+        MORE_EQUAL_THAN,
+        PLUS,
+        MINUS,
+        MULTI,
+        DIV,
+        REM,
+        NOT,
+        TRUE,
+        FALSE,
     }
 }
 
