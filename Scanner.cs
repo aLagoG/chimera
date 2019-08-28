@@ -19,23 +19,28 @@ namespace Chimera {
         readonly string input;
 
         static readonly Regex regex = new Regex(
-            @"                             
-                (?<And>        [&]       )
-              | (?<Assign>     [=]       )
-              | (?<Comment>    ;.*       )
-              | (?<False>      [#]f      )
-              | (?<Identifier> [a-zA-Z]+ )
-              | (?<IntLiteral> \d+       )
-              | (?<Less>       [<]       )
-              | (?<Mul>        [*]       )
-              | (?<Neg>        [-]       )
-              | (?<Newline>    \n        )
-              | (?<ParLeft>    [(]       )
-              | (?<ParRight>   [)]       )
-              | (?<Plus>       [+]       )              
-              | (?<True>       [#]t      )
-              | (?<WhiteSpace> \s        )     # Must go anywhere after Newline.
-              | (?<Other>      .         )     # Must be last: match any other character.
+            @" 
+                (?<Comment>    //.*      )     # Single Line comment
+                | (?<Comment>    \/\*(.|[\r\n])*\*\/  )     # Multiple Line comment
+                | (?<Identifier>  \w+      )
+                | (?<EndOfExpression>    [;]      )
+                | (?<Assign>    :=      )
+                | (?<Comma>    [,]      )
+                | (?<Declare>    [:]      )
+                | (?<ParOpen>    [(]       )
+                | (?<ParClose>   [)]       )
+                | (?<CurOpen>    [{]       )
+                | (?<CurClose>   [}]       )
+                | (?<BracketOpen>    [[]       )
+                | (?<BracketClose>   []]       )
+                | (?<Plus>       [+]       )  
+                | (?<Minus>       [-]       )
+                | (?<Equal>       [=]       )  
+                | (?<Unequal>    <>       )
+                | (?<LessThan>    [<]       )
+                | (?<Newline>    \n        )
+                | (?<WhiteSpace> \s        )     # Must go anywhere after Newline.
+                | (?<Other>      .         )     # Must be last: match any other character.
             ", 
             RegexOptions.IgnorePatternWhitespace 
                 | RegexOptions.Compiled
@@ -44,27 +49,47 @@ namespace Chimera {
 
         static readonly IDictionary<string, TokenCategory> keywords =
             new Dictionary<string, TokenCategory>() {
-                {"bool", TokenCategory.BOOL},
+                {"const", TokenCategory.CONST},
+                {"var", TokenCategory.VAR},
+                {"program", TokenCategory.PROGRAM},
                 {"end", TokenCategory.END},
+                {"integer", TokenCategory.INTEGER},
+                {"boolean", TokenCategory.BOOLEAN},
+                {"string", TokenCategory.STRING},
+                {"list", TokenCategory.LIST},
+                {"of", TokenCategory.OF},
+                {"procedure", TokenCategory.PROCEDURE},
+                {"begin", TokenCategory.BEGIN},
                 {"if", TokenCategory.IF},
-                {"int", TokenCategory.INT},
-                {"print", TokenCategory.PRINT},
-                {"then", TokenCategory.THEN}
+                {"then", TokenCategory.THEN},
+                {"else", TokenCategory.ELSE},
+                {"loop", TokenCategory.LOOP},
+                {"for", TokenCategory.FOR},
+                {"in", TokenCategory.IN},
+                {"do", TokenCategory.DO},
+                {"loop", TokenCategory.LOOP},
+                {"return", TokenCategory.RETURN},
+                {"exit", TokenCategory.EXIT},
+                {"and", TokenCategory.AND},
+                {"or", TokenCategory.OR},
+                {"xor", TokenCategory.XOR},
+
             };
 
         static readonly IDictionary<string, TokenCategory> nonKeywords =
             new Dictionary<string, TokenCategory>() {
-                {"And", TokenCategory.AND},
+                {"EndOfExpression", TokenCategory.END_OF_EXPRESSION},
                 {"Assign", TokenCategory.ASSIGN},
-                {"False", TokenCategory.FALSE},
-                {"IntLiteral", TokenCategory.INT_LITERAL},
-                {"Less", TokenCategory.LESS},
-                {"Mul", TokenCategory.MUL},
-                {"Neg", TokenCategory.NEG},
-                {"ParLeft", TokenCategory.PARENTHESIS_OPEN},
-                {"ParRight", TokenCategory.PARENTHESIS_CLOSE},
-                {"Plus", TokenCategory.PLUS},
-                {"True", TokenCategory.TRUE}                
+                {"Comma", TokenCategory.COMMA},    
+                {"Declare", TokenCategory.DECLARE},
+                {"ParOpen", TokenCategory.PARENTHESIS_OPEN},
+                {"ParClose", TokenCategory.PARENTHESIS_CLOSE},
+                {"CurOpen", TokenCategory.CURLY_OPEN},
+                {"CurClose", TokenCategory.CURLY_CLOSE},
+                {"BracketOpen", TokenCategory.BRACKET_OPEN},
+                {"BracketClose", TokenCategory.BRACKET_CLOSE},
+                {"Equal", TokenCategory.EQUAL},
+                {"Unequal", TokenCategory.UNEQUAL},
             };
 
         public Scanner(string input) {
@@ -91,9 +116,7 @@ namespace Chimera {
                     || m.Groups["Comment"].Success) {
 
                     // Skip white space and comments.
-
                 } else if (m.Groups["Identifier"].Success) {
-
                     if (keywords.ContainsKey(m.Value)) {
 
                         // Matched string is a Chimera keyword.
