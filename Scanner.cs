@@ -12,45 +12,48 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Chimera {
+namespace Chimera
+{
 
-    class Scanner {
+    class Scanner
+    {
 
         readonly string input;
 
         static readonly Regex regex = new Regex(
-            @" 
-                (?<String>        "".*""    )
+            @"
+                (?<String>        ""(?:[^""\n\r]|"""")*""    )
                 | (?<Comment>         //.*      )     # Single Line comment
-                | (?<Comment>       \/\*(.|[\r\n])*\*\/  )  # Multiple Line comment
-                | (?<Identifier>    [a-zA-Z_]\w*      )
-                | (?<IntLiteral>    [\d]+[\s]     )
-                | (?<EndOfExpr>     [;]       )
+                | (?<Comment>       \/\*(?:[\r\n]|[^(\*\/)])*\*\/  )
+                | (?<Identifier>    \b(?<![_0-9])[a-z]\w*  ) #simpler: [a-z]\w*
+                | (?<IntLiteral>    \b\d+\b     ) #maybe we don't need to check for word boudaries
+                | (?<EndOfExpr>     ;         )
                 | (?<Assign>        :=        )
-                | (?<Comma>         [,]       )
-                | (?<Declare>       [:]       )
+                | (?<Comma>         ,         )
+                | (?<TypeDeclare>   :         )
                 | (?<ParOpen>       [(]       )
                 | (?<ParClose>      [)]       )
                 | (?<CurOpen>       [{]       )
                 | (?<CurClose>      [}]       )
                 | (?<BracketOpen>   [[]       )
                 | (?<BracketClose>  []]       )
-                | (?<Plus>          [+]       )  
-                | (?<Minus>         [-]       )
-                | (?<Multi>         [*]       )
-                | (?<LessEqualThan> <=        )
-                | (?<MoreEqualThan> >=        )
-                | (?<Equal>         [=]       )  
+                | (?<Plus>          [+]       )
+                | (?<Minus>         -         )
+                | (?<Times>         [*]       )
+                | (?<LessThanEqual> <=        )
+                | (?<MoreThanEqual> >=        )
+                | (?<Equal>         =         )
                 | (?<Unequal>       <>        )
-                | (?<LessThan>      [<]       )
-                | (?<MoreThan>      [>]       )
-                | (?<Newline>       \n        )
+                | (?<LessThan>      <         )
+                | (?<MoreThan>      >         )
+                | (?<NewLine>       \n        )
                 | (?<WhiteSpace>    \s        )     # Must go anywhere after Newline.
                 | (?<Other>         .         )     # Must be last: match any other character.
-            ", 
-            RegexOptions.IgnorePatternWhitespace 
+            ",
+            RegexOptions.IgnorePatternWhitespace
                 | RegexOptions.Compiled
                 | RegexOptions.Multiline
+                | RegexOptions.IgnoreCase
             );
 
         static readonly IDictionary<string, TokenCategory> keywords =
@@ -60,14 +63,15 @@ namespace Chimera {
                 {"program", TokenCategory.PROGRAM},
                 {"end", TokenCategory.END},
                 {"integer", TokenCategory.INTEGER},
-                {"boolean", TokenCategory.BOOLEAN},
                 {"string", TokenCategory.STRING},
+                {"boolean", TokenCategory.BOOLEAN},
                 {"list", TokenCategory.LIST},
                 {"of", TokenCategory.OF},
                 {"procedure", TokenCategory.PROCEDURE},
                 {"begin", TokenCategory.BEGIN},
                 {"if", TokenCategory.IF},
                 {"then", TokenCategory.THEN},
+                {"elseif", TokenCategory.ELSEIF},
                 {"else", TokenCategory.ELSE},
                 {"loop", TokenCategory.LOOP},
                 {"for", TokenCategory.FOR},
@@ -88,10 +92,10 @@ namespace Chimera {
         static readonly IDictionary<string, TokenCategory> nonKeywords =
             new Dictionary<string, TokenCategory>() {
                 {"EndOfExpr", TokenCategory.END_OF_EXPRESSION},
-                {"String", TokenCategory.STRING},
+                {"String", TokenCategory.STRING_LITERAL},
                 {"Assign", TokenCategory.ASSIGN},
-                {"Comma", TokenCategory.COMMA},    
-                {"Declare", TokenCategory.DECLARE},
+                {"Comma", TokenCategory.COMMA},
+                {"TypeDeclare", TokenCategory.TYPE_DECLARE},
                 {"ParOpen", TokenCategory.PARENTHESIS_OPEN},
                 {"ParClose", TokenCategory.PARENTHESIS_CLOSE},
                 {"CurOpen", TokenCategory.CURLY_OPEN},
@@ -100,21 +104,23 @@ namespace Chimera {
                 {"BracketClose", TokenCategory.BRACKET_CLOSE},
                 {"Equal", TokenCategory.EQUAL},
                 {"Unequal", TokenCategory.UNEQUAL},
-                {"LessEqualThan", TokenCategory.LESS_EQUAL_THAN},
-                {"MoreEqualThan", TokenCategory.MORE_EQUAL_THAN},
+                {"LessThanEqual", TokenCategory.LESS_THAN_EQUAL},
+                {"MoreThanEqual", TokenCategory.MORE_THAN_EQUAL},
                 {"LessThan", TokenCategory.LESS_THAN},
                 {"MoreThan", TokenCategory.MORE_THAN},
                 {"Plus", TokenCategory.PLUS},
                 {"Minus", TokenCategory.MINUS},
-                {"Multi", TokenCategory.MULTI},
+                {"Times", TokenCategory.TIMES},
                 {"IntLiteral", TokenCategory.INT_LITERAL}
             };
 
-        public Scanner(string input) {
+        public Scanner(string input)
+        {
             this.input = input;
         }
 
-        public IEnumerable<Token> Start() {
+        public IEnumerable<Token> Start()
+        {
 
             var row = 1;
             var columnStart = 0;
@@ -122,40 +128,55 @@ namespace Chimera {
             Func<Match, TokenCategory, Token> newTok = (m, tc) =>
                 new Token(m.Value, tc, row, m.Index - columnStart + 1);
 
-            foreach (Match m in regex.Matches(input)) {
+            foreach (Match m in regex.Matches(input))
+            {
 
-                if (m.Groups["Newline"].Success) {
+                if (m.Groups["Newline"].Success)
+                {
 
                     // Found a new line.
                     row++;
                     columnStart = m.Index + m.Length;
 
-                } else if (m.Groups["WhiteSpace"].Success 
-                    || m.Groups["Comment"].Success) {
+                }
+                else if (m.Groups["WhiteSpace"].Success
+                  || m.Groups["Comment"].Success)
+                {
 
                     // Skip white space and comments.
-                } else if (m.Groups["Identifier"].Success) {
-                    if (keywords.ContainsKey(m.Value)) {
+                }
+                else if (m.Groups["Identifier"].Success)
+                {
+                    if (keywords.ContainsKey(m.Value))
+                    {
 
                         // Matched string is a Chimera keyword.
-                        yield return newTok(m, keywords[m.Value]);                                               
+                        yield return newTok(m, keywords[m.Value]);
 
-                    } else { 
+                    }
+                    else
+                    {
 
                         // Otherwise it's just a plain identifier.
                         yield return newTok(m, TokenCategory.IDENTIFIER);
                     }
 
-                } else if (m.Groups["Other"].Success) {
+                }
+                else if (m.Groups["Other"].Success)
+                {
 
                     // Found an illegal character.
                     yield return newTok(m, TokenCategory.ILLEGAL_CHAR);
 
-                } else {
+                }
+                else
+                {
 
                     // Match must be one of the non keywords.
-                    foreach (var name in nonKeywords.Keys) {
-                        if (m.Groups[name].Success) {
+                    foreach (var name in nonKeywords.Keys)
+                    {
+                        if (m.Groups[name].Success)
+                        {
                             yield return newTok(m, nonKeywords[name]);
                             break;
                         }
@@ -163,9 +184,9 @@ namespace Chimera {
                 }
             }
 
-            yield return new Token(null, 
-                                   TokenCategory.EOF, 
-                                   row, 
+            yield return new Token(null,
+                                   TokenCategory.EOF,
+                                   row,
                                    input.Length - columnStart + 1);
         }
     }

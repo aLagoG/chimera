@@ -7,16 +7,18 @@ Authors:
 	A01371719 Servio Tulio Reyes Castillo
 */
 
-namespace Chimera {
+namespace Chimera
+{
 
-    enum TokenCategory {
+    enum TokenCategory
+    {
         IDENTIFIER,
         ILLEGAL_CHAR,
         EOF,
         PROGRAM,
         CONST,
         VAR,
-        DECLARE,
+        TYPE_DECLARE,
         COMMA,
         END_OF_EXPRESSION,
         ASSIGN,
@@ -25,6 +27,7 @@ namespace Chimera {
         INT_LITERAL,
         BOOLEAN,
         STRING,
+        STRING_LITERAL,
         LIST,
         OF,
         CURLY_OPEN,
@@ -52,11 +55,11 @@ namespace Chimera {
         UNEQUAL,
         LESS_THAN,
         MORE_THAN,
-        LESS_EQUAL_THAN,
-        MORE_EQUAL_THAN,
+        LESS_THAN_EQUAL,
+        MORE_THAN_EQUAL,
         PLUS,
         MINUS,
-        MULTI,
+        TIMES,
         DIV,
         REM,
         NOT,

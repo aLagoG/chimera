@@ -22,6 +22,10 @@ rem
 not
 _hola
 999jo
+939
+89-
+_99
+abc99
 hh
 k
 const
@@ -51,9 +55,13 @@ true
 false
 "this is a string"
 "this is another ""string"""
+"this is another one"not_string"""
 "/*should appear*/"
 "//should appear"
 // program
 /*
 shouldn't appear
+*/
+/*
+shouldn't */appear
 */
