@@ -22,33 +22,33 @@ namespace Chimera
 
         static readonly Regex regex = new Regex(
             @"
-                (?<String>          ""(?:[^""\n\r]|"""")*"" )
-                | (?<Comment>       //.*                    )   # Single Line comment
-                | (?<Comment>       (?:\/\*(.|\n)*[\*][\/]) )   # Multi Line comment
-                | (?<Identifier>    \b[a-z][a-z0-9_]*\b     )   # Simpler: [a-z]\w*
-                | (?<IntLiteral>    \b\d+\b                 )   # Maybe we don't need to check for word boundaries
-                | (?<EndOfExpr>     ;                       )
-                | (?<Assign>        :=                      )
-                | (?<Comma>         ,                       )
-                | (?<TypeDeclare>   :                       )
-                | (?<ParOpen>       [(]                     )
-                | (?<ParClose>      [)]                     )
-                | (?<CurOpen>       [{]                     )
-                | (?<CurClose>      [}]                     )
-                | (?<BracketOpen>   [[]                     )
-                | (?<BracketClose>  []]                     )
-                | (?<Plus>          [+]                     )
-                | (?<Minus>         -                       )
-                | (?<Times>         [*]                     )
-                | (?<LessThanEqual> <=                      )
-                | (?<MoreThanEqual> >=                      )
-                | (?<Equal>         =                       )
-                | (?<Unequal>       <>                      )
-                | (?<LessThan>      <                       )
-                | (?<MoreThan>      >                       )
-                | (?<NewLine>       \n                      )
-                | (?<WhiteSpace>    \s                      )     # Must go anywhere after Newline.
-                | (?<Other>         .                       )     # Must be last: match any other character.
+                (?<String>        ""(?:[^""\n\r]|"""")*""    )
+                | (?<Comment>         //.*      )     # Single Line comment
+                | (?<Comment>       \/\*(?:[\r\n]|[^(\*\/)])*\*\/  )
+                | (?<Identifier>    \b(?<![_0-9])[a-z]\w*  ) #simpler: [a-z]\w*
+                | (?<IntLiteral>    \b\d+\b     ) #maybe we don't need to check for word boudaries
+                | (?<EndOfExpr>     ;         )
+                | (?<Assign>        :=        )
+                | (?<Comma>         ,         )
+                | (?<TypeDeclare>   :         )
+                | (?<ParOpen>       [(]       )
+                | (?<ParClose>      [)]       )
+                | (?<CurOpen>       [{]       )
+                | (?<CurClose>      [}]       )
+                | (?<BracketOpen>   [[]       )
+                | (?<BracketClose>  []]       )
+                | (?<Plus>          [+]       )
+                | (?<Minus>         -         )
+                | (?<Times>         [*]       )
+                | (?<LessThanEqual> <=        )
+                | (?<MoreThanEqual> >=        )
+                | (?<Equal>         =         )
+                | (?<Unequal>       <>        )
+                | (?<LessThan>      <         )
+                | (?<MoreThan>      >         )
+                | (?<NewLine>       \n        )
+                | (?<WhiteSpace>    \s        )     # Must go anywhere after Newline.
+                | (?<Other>         .         )     # Must be last: match any other character.
             ",
             RegexOptions.IgnorePatternWhitespace
                 | RegexOptions.Compiled
@@ -130,49 +130,48 @@ namespace Chimera
 
             foreach (Match m in regex.Matches(input))
             {
-                if (m.Groups["NewLine"].Success)
+
+                if (m.Groups["Newline"].Success)
                 {
+
                     // Found a new line.
                     row++;
                     columnStart = m.Index + m.Length;
-                }
-                else if (m.Groups["WhiteSpace"].Success)
-                {
-                    // Skip white space.
-                }
-                else if (m.Groups["Comment"].Success)
-                {
-                    // Found a comment.
-                    // Process New lines for better row and column detection
-                    MatchCollection newLineMatches = Regex.Matches(m.Groups["Comment"].Value, "\n", RegexOptions.Multiline);
 
-                    if (newLineMatches.Count > 0)
-                    {
-                        Match lastMatch = newLineMatches[newLineMatches.Count - 1];
-                        row += newLineMatches.Count;
-                        columnStart = m.Index + lastMatch.Index + lastMatch.Length;
-                    }
+                }
+                else if (m.Groups["WhiteSpace"].Success
+                  || m.Groups["Comment"].Success)
+                {
+
+                    // Skip white space and comments.
                 }
                 else if (m.Groups["Identifier"].Success)
                 {
                     if (keywords.ContainsKey(m.Value))
                     {
+
                         // Matched string is a Chimera keyword.
                         yield return newTok(m, keywords[m.Value]);
+
                     }
                     else
                     {
+
                         // Otherwise it's just a plain identifier.
                         yield return newTok(m, TokenCategory.IDENTIFIER);
                     }
+
                 }
                 else if (m.Groups["Other"].Success)
                 {
+
                     // Found an illegal character.
                     yield return newTok(m, TokenCategory.ILLEGAL_CHAR);
+
                 }
                 else
                 {
+
                     // Match must be one of the non keywords.
                     foreach (var name in nonKeywords.Keys)
                     {
