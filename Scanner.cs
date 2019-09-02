@@ -22,33 +22,33 @@ namespace Chimera
 
         static readonly Regex regex = new Regex(
             @"
-                (?<String>          ""(?:[^""\n\r]|"""")*"" )
-                | (?<Comment>       //.*                    )   # Single Line comment
-                | (?<Comment>       (?:\/\*(.|\n)*[\*][\/]) )   # Multi Line comment
-                | (?<Identifier>    \b[a-z][a-z0-9_]*\b     )   # Simpler: [a-z]\w*
-                | (?<IntLiteral>    \b\d+\b                 )   # Maybe we don't need to check for word boundaries
-                | (?<EndOfExpr>     ;                       )
-                | (?<Assign>        :=                      )
-                | (?<Comma>         ,                       )
-                | (?<TypeDeclare>   :                       )
-                | (?<ParOpen>       [(]                     )
-                | (?<ParClose>      [)]                     )
-                | (?<CurOpen>       [{]                     )
-                | (?<CurClose>      [}]                     )
-                | (?<BracketOpen>   [[]                     )
-                | (?<BracketClose>  []]                     )
-                | (?<Plus>          [+]                     )
-                | (?<Minus>         -                       )
-                | (?<Times>         [*]                     )
-                | (?<LessThanEqual> <=                      )
-                | (?<MoreThanEqual> >=                      )
-                | (?<Equal>         =                       )
-                | (?<Unequal>       <>                      )
-                | (?<LessThan>      <                       )
-                | (?<MoreThan>      >                       )
-                | (?<NewLine>       \n                      )
-                | (?<WhiteSpace>    \s                      )     # Must go anywhere after Newline.
-                | (?<Other>         .                       )     # Must be last: match any other character.
+                (?<String>          ""(?:[^""\n]|"""")*"" )
+                | (?<Comment>       //.*                  )   # Single Line comment
+                | (?<Comment>       \/\*(?:.|\n)*?\*\/    )   # Multi Line comment
+                | (?<Identifier>    [a-z]\w*              )
+                | (?<IntLiteral>    \d+                   )
+                | (?<EndOfExpr>     ;                     )
+                | (?<Assign>        :=                    )
+                | (?<Comma>         ,                     )
+                | (?<TypeDeclare>   :                     )
+                | (?<ParOpen>       [(]                   )
+                | (?<ParClose>      [)]                   )
+                | (?<CurOpen>       [{]                   )
+                | (?<CurClose>      [}]                   )
+                | (?<BracketOpen>   [[]                   )
+                | (?<BracketClose>  []]                   )
+                | (?<Plus>          [+]                   )
+                | (?<Minus>         -                     )
+                | (?<Times>         [*]                   )
+                | (?<LessThanEqual> <=                    )
+                | (?<MoreThanEqual> >=                    )
+                | (?<Equal>         =                     )
+                | (?<Unequal>       <>                    )
+                | (?<LessThan>      <                     )
+                | (?<MoreThan>      >                     )
+                | (?<NewLine>       \n                    )
+                | (?<WhiteSpace>    \s                    )     # Must go anywhere after Newline.
+                | (?<Other>         .                     )     # Must be last: match any other character.
             ",
             RegexOptions.IgnorePatternWhitespace
                 | RegexOptions.Compiled

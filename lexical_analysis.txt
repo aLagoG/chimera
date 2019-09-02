@@ -1117,58 +1117,54 @@ Included in this release:
 [21] {MORE_THAN_EQUAL, ">=", @(21, 1)}
 [22] {NOT, "not", @(22, 1)}
 [23] {ILLEGAL_CHAR, "_", @(23, 1)}
-[24] {ILLEGAL_CHAR, "h", @(23, 2)}
-[25] {ILLEGAL_CHAR, "o", @(23, 3)}
-[26] {ILLEGAL_CHAR, "l", @(23, 4)}
-[27] {ILLEGAL_CHAR, "a", @(23, 5)}
-[28] {ILLEGAL_CHAR, "9", @(24, 1)}
-[29] {ILLEGAL_CHAR, "9", @(24, 2)}
-[30] {ILLEGAL_CHAR, "9", @(24, 3)}
-[31] {ILLEGAL_CHAR, "j", @(24, 4)}
-[32] {ILLEGAL_CHAR, "o", @(24, 5)}
-[33] {INT_LITERAL, "939", @(25, 1)}
-[34] {INT_LITERAL, "89", @(26, 1)}
-[35] {MINUS, "-", @(26, 3)}
-[36] {ILLEGAL_CHAR, "_", @(27, 1)}
-[37] {ILLEGAL_CHAR, "9", @(27, 2)}
-[38] {ILLEGAL_CHAR, "9", @(27, 3)}
-[39] {IDENTIFIER, "abc99", @(28, 1)}
-[40] {IDENTIFIER, "hh", @(29, 1)}
-[41] {IDENTIFIER, "k", @(30, 1)}
-[42] {CONST, "const", @(31, 1)}
-[43] {VAR, "var", @(32, 1)}
-[44] {PROGRAM, "program", @(33, 1)}
-[45] {END, "end", @(34, 1)}
-[46] {INTEGER, "integer", @(35, 1)}
-[47] {BOOLEAN, "boolean", @(36, 1)}
-[48] {STRING, "string", @(37, 1)}
-[49] {LIST, "list", @(38, 1)}
-[50] {OF, "of", @(39, 1)}
-[51] {PROCEDURE, "procedure", @(40, 1)}
-[52] {BEGIN, "begin", @(41, 1)}
-[53] {IF, "if", @(42, 1)}
-[54] {THEN, "then", @(43, 1)}
-[55] {ELSE, "else", @(44, 1)}
-[56] {LOOP, "loop", @(45, 1)}
-[57] {FOR, "for", @(46, 1)}
-[58] {IN, "in", @(47, 1)}
-[59] {DO, "do", @(48, 1)}
-[60] {RETURN, "return", @(49, 1)}
-[61] {EXIT, "exit", @(50, 1)}
-[62] {AND, "and", @(51, 1)}
-[63] {OR, "or", @(52, 1)}
-[64] {XOR, "xor", @(53, 1)}
-[65] {TRUE, "true", @(54, 1)}
-[66] {FALSE, "false", @(55, 1)}
-[67] {STRING_LITERAL, ""this is a string"", @(56, 1)}
-[68] {STRING_LITERAL, ""this is another ""string"""", @(57, 1)}
-[69] {STRING_LITERAL, ""this is another one"", @(58, 1)}
-[70] {IDENTIFIER, "not_string", @(58, 22)}
-[71] {STRING_LITERAL, """", @(58, 32)}
-[72] {ILLEGAL_CHAR, """, @(58, 34)}
-[73] {STRING_LITERAL, ""/*should appear*/"", @(59, 1)}
-[74] {STRING_LITERAL, ""//should appear"", @(60, 1)}
-[75] {EOF, "", @(68, 1)}
+[24] {IDENTIFIER, "hola", @(23, 2)}
+[25] {INT_LITERAL, "999", @(24, 1)}
+[26] {IDENTIFIER, "jo", @(24, 4)}
+[27] {INT_LITERAL, "939", @(25, 1)}
+[28] {INT_LITERAL, "89", @(26, 1)}
+[29] {MINUS, "-", @(26, 3)}
+[30] {ILLEGAL_CHAR, "_", @(27, 1)}
+[31] {INT_LITERAL, "99", @(27, 2)}
+[32] {IDENTIFIER, "abc99", @(28, 1)}
+[33] {IDENTIFIER, "hh", @(29, 1)}
+[34] {IDENTIFIER, "k", @(30, 1)}
+[35] {CONST, "const", @(31, 1)}
+[36] {VAR, "var", @(32, 1)}
+[37] {PROGRAM, "program", @(33, 1)}
+[38] {END, "end", @(34, 1)}
+[39] {INTEGER, "integer", @(35, 1)}
+[40] {BOOLEAN, "boolean", @(36, 1)}
+[41] {STRING, "string", @(37, 1)}
+[42] {LIST, "list", @(38, 1)}
+[43] {OF, "of", @(39, 1)}
+[44] {PROCEDURE, "procedure", @(40, 1)}
+[45] {BEGIN, "begin", @(41, 1)}
+[46] {IF, "if", @(42, 1)}
+[47] {THEN, "then", @(43, 1)}
+[48] {ELSE, "else", @(44, 1)}
+[49] {LOOP, "loop", @(45, 1)}
+[50] {FOR, "for", @(46, 1)}
+[51] {IN, "in", @(47, 1)}
+[52] {DO, "do", @(48, 1)}
+[53] {RETURN, "return", @(49, 1)}
+[54] {EXIT, "exit", @(50, 1)}
+[55] {AND, "and", @(51, 1)}
+[56] {OR, "or", @(52, 1)}
+[57] {XOR, "xor", @(53, 1)}
+[58] {TRUE, "true", @(54, 1)}
+[59] {FALSE, "false", @(55, 1)}
+[60] {STRING_LITERAL, ""this is a string"", @(56, 1)}
+[61] {STRING_LITERAL, ""this is another ""string"""", @(57, 1)}
+[62] {STRING_LITERAL, ""this is another one"", @(58, 1)}
+[63] {IDENTIFIER, "not_string", @(58, 22)}
+[64] {STRING_LITERAL, """", @(58, 32)}
+[65] {ILLEGAL_CHAR, """, @(58, 34)}
+[66] {STRING_LITERAL, ""/*should appear*/"", @(59, 1)}
+[67] {STRING_LITERAL, ""//should appear"", @(60, 1)}
+[68] {IDENTIFIER, "appear", @(66, 13)}
+[69] {TIMES, "*", @(67, 1)}
+[70] {ILLEGAL_CHAR, "/", @(67, 2)}
+[71] {EOF, "", @(68, 1)}
 
 ===== Tokens from: "test_programs/variables.chimera" =====
 [1] {CONST, "const", @(6, 1)}
