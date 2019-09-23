@@ -27,10 +27,10 @@ namespace Chimera
                 | (?<Comment>       \/\*(?:.|\n)*?\*\/    )   # Multi Line comment
                 | (?<Identifier>    [a-z]\w*              )
                 | (?<IntLiteral>    \d+                   )
-                | (?<EndOfExpr>     ;                     )
-                | (?<Assign>        :=                    )
+                | (?<SemiColon>     ;                     )
+                | (?<ColonEqual>    :=                    )
                 | (?<Comma>         ,                     )
-                | (?<TypeDeclare>   :                     )
+                | (?<Colon>         :                     )
                 | (?<ParOpen>       [(]                   )
                 | (?<ParClose>      [)]                   )
                 | (?<CurOpen>       [{]                   )
@@ -91,11 +91,11 @@ namespace Chimera
 
         static readonly IDictionary<string, TokenCategory> nonKeywords =
             new Dictionary<string, TokenCategory>() {
-                {"EndOfExpr", TokenCategory.END_OF_EXPRESSION},
+                {"SemiColon", TokenCategory.SEMI_COLON},
                 {"String", TokenCategory.STRING_LITERAL},
-                {"Assign", TokenCategory.ASSIGN},
+                {"ColonEqual", TokenCategory.COLON_EQUAL},
                 {"Comma", TokenCategory.COMMA},
-                {"TypeDeclare", TokenCategory.TYPE_DECLARE},
+                {"Colon", TokenCategory.COLON},
                 {"ParOpen", TokenCategory.PARENTHESIS_OPEN},
                 {"ParClose", TokenCategory.PARENTHESIS_CLOSE},
                 {"CurOpen", TokenCategory.CURLY_OPEN},
