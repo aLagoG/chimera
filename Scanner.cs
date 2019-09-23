@@ -27,8 +27,8 @@ namespace Chimera
                 | (?<Comment>       \/\*(?:.|\n)*?\*\/    )   # Multi Line comment
                 | (?<Identifier>    [a-z]\w*              )
                 | (?<IntLiteral>    \d+                   )
-                | (?<SemiColon>     ;                     )
-                | (?<ColonEqual>    :=                    )
+                | (?<Semicolon>     ;                     )
+                | (?<Assign>        :=                    )
                 | (?<Comma>         ,                     )
                 | (?<Colon>         :                     )
                 | (?<ParOpen>       [(]                   )
@@ -91,7 +91,7 @@ namespace Chimera
 
         static readonly IDictionary<string, TokenCategory> nonKeywords =
             new Dictionary<string, TokenCategory>() {
-                {"SemiColon", TokenCategory.SEMI_COLON},
+                {"Semicolon", TokenCategory.SEMICOLON},
                 {"String", TokenCategory.STRING_LITERAL},
                 {"ColonEqual", TokenCategory.COLON_EQUAL},
                 {"Comma", TokenCategory.COMMA},
