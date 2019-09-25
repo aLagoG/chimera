@@ -17,11 +17,12 @@ namespace Chimera
     public class Driver
     {
 
-        const string VERSION = "0.1";
+        const string VERSION = "0.2";
 
         //-----------------------------------------------------------
         static readonly string[] ReleaseIncludes = {
-            "Lexical analysis"
+            "Lexical analysis",
+            "Syntactic analysis"
         };
 
         //-----------------------------------------------------------
@@ -63,28 +64,26 @@ namespace Chimera
                 Environment.Exit(1);
             }
 
-            try
+            foreach (string inputPath in args)
             {
-                foreach (string inputPath in args)
+                try
                 {
                     var input = File.ReadAllText(inputPath);
-
-                    Console.WriteLine(String.Format(
-                        "\n===== Tokens from: \"{0}\" =====", inputPath)
-                    );
-                    var count = 1;
-                    foreach (var tok in new Scanner(input).Start())
-                    {
-                        Console.WriteLine(String.Format("[{0}] {1}",
-                                                        count++, tok)
-                        );
-                    }
+                    var parser = new Parser(new Scanner(input).Start().GetEnumerator());
+                    parser.Program();
+                    Console.WriteLine("Syntax OK.");
                 }
-            }
-            catch (FileNotFoundException e)
-            {
-                Console.Error.WriteLine(e.Message);
-                Environment.Exit(1);
+                catch (Exception e)
+                {
+
+                    if (e is FileNotFoundException || e is SyntaxError)
+                    {
+                        Console.Error.WriteLine(e.Message);
+                        Environment.Exit(1);
+                    }
+
+                    throw;
+                }
             }
         }
 
