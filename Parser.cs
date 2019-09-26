@@ -107,6 +107,9 @@ namespace Chimera
                 TokenCategory.LIST
             };
 
+        static readonly ISet<TokenCategory> firstOfStatement =
+            new HashSet<TokenCategory>() { };
+
         IEnumerator<Token> tokenStream;
 
         public Parser(IEnumerator<Token> tokenStream)
@@ -120,64 +123,89 @@ namespace Chimera
             get { return tokenStream.Current.Category; }
         }
 
-        public Token Expect(TokenCategory category)
+        public bool Has<T>(T category)
         {
-            if (CurrentToken == category)
+            var token = category as TokenCategory?;
+            if (token != null)
+            {
+                return CurrentToken == token;
+            }
+            var tokenSet = category as ISet<TokenCategory>;
+            if (tokenSet != null)
+            {
+                return tokenSet.Contains(CurrentToken);
+            }
+            throw new NotImplementedException($"Has method is not implemented for type {typeof(T).FullName}");
+        }
+
+
+        public void Expect<T>(T category)
+        {
+            if (Has(category))
             {
                 Token current = tokenStream.Current;
                 tokenStream.MoveNext();
-                return current;
+                return;
             }
             else
             {
-                throw new SyntaxError(category, tokenStream.Current);
+                var token = category as TokenCategory?;
+                if (token != null)
+                {
+                    throw new SyntaxError((TokenCategory)token, tokenStream.Current);
+                }
+                var tokenSet = category as ISet<TokenCategory>;
+                if (tokenSet != null)
+                {
+                    throw new SyntaxError(tokenSet, tokenStream.Current);
+                }
+                throw new NotImplementedException($"SyntaxError is not implemented for type {typeof(T).FullName}");
             }
         }
 
-        public Token ExpectAnyOf(ISet<TokenCategory> categories)
+        public void Optional<T>(T category, Action onSuccess
+        )
         {
-            if (categories.Contains(CurrentToken))
+            if (Has(category))
             {
-                Token current = tokenStream.Current;
-                tokenStream.MoveNext();
-                return current;
+                Expect(category);
+                onSuccess();
             }
-            else
+        }
+
+        public void ZeroOrMore<T>(T category, Action onSucces
+        )
+        {
+            while (Has(category))
             {
-                throw new SyntaxError(categories, tokenStream.Current);
+                Expect(category);
+                onSucces();
             }
+        }
+
+        public void OneOrMore<T>(T category, Action onSucces
+        )
+        {
+            do
+            {
+                Expect(category);
+                onSucces();
+            } while (Has(category));
         }
 
         public void Program()
         {
-            if (CurrentToken == TokenCategory.CONST)
+            Optional(TokenCategory.CONST, () =>
             {
-                Expect(TokenCategory.CONST);
-                do
-                {
-                    ConstantDeclaration();
-                }
-                while (CurrentToken == TokenCategory.IDENTIFIER);
-            }
-            if (CurrentToken == TokenCategory.VAR)
+                OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration);
+            });
+            Optional(TokenCategory.VAR, () =>
             {
-                Expect(TokenCategory.VAR);
-                do
-                {
-                    VariableDeclaration();
-                }
-                while (CurrentToken == TokenCategory.IDENTIFIER);
-            }
-            while (CurrentToken == TokenCategory.PROCEDURE)
-            {
-                ProcedureDeclaration();
-            }
+                OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration);
+            });
+            ZeroOrMore(TokenCategory.PROCEDURE, ProcedureDeclaration);
             Expect(TokenCategory.PROGRAM);
-            // TODO: change this with startOfStatement
-            while (false)
-            {
-                Statement();
-            }
+            ZeroOrMore(firstOfStatement, Statement);
             Expect(TokenCategory.END);
             Expect(TokenCategory.SEMICOLON);
         }
@@ -193,11 +221,10 @@ namespace Chimera
         public void VariableDeclaration()
         {
             Expect(TokenCategory.IDENTIFIER);
-            while (CurrentToken == TokenCategory.COMMA)
+            ZeroOrMore(TokenCategory.COMMA, () =>
             {
-                Expect(TokenCategory.COMMA);
                 Expect(TokenCategory.IDENTIFIER);
-            }
+            });
             Expect(TokenCategory.COLON);
             Type();
             Expect(TokenCategory.SEMICOLON);
@@ -221,7 +248,7 @@ namespace Chimera
 
         public void SimpleLiteral()
         {
-            ExpectAnyOf(simpleLiterals);
+            Expect(simpleLiterals);
         }
 
         public void Type()
@@ -242,7 +269,7 @@ namespace Chimera
 
         public void SimpleType()
         {
-            ExpectAnyOf(simpleTypes);
+            Expect(simpleTypes);
         }
 
         public void ListType()
@@ -255,30 +282,45 @@ namespace Chimera
         public void List()
         {
             Expect(TokenCategory.CURLY_OPEN);
-            if (simpleLiterals.Contains(CurrentToken))
+            Optional(simpleLiterals, () =>
             {
-                SimpleLiteral();
-                while (CurrentToken == TokenCategory.COMMA)
-                {
-                    Expect(TokenCategory.COMMA);
-                    SimpleLiteral();
-                }
-            }
+                ZeroOrMore(TokenCategory.COMMA, SimpleLiteral);
+            });
             Expect(TokenCategory.CURLY_CLOSE);
         }
 
-        public void ProcedureDeclaration() { }
+        public void ProcedureDeclaration()
+        {
+            Expect(TokenCategory.PROCEDURE);
+            Expect(TokenCategory.IDENTIFIER);
+            Expect(TokenCategory.PARENTHESIS_OPEN);
+            ZeroOrMore(TokenCategory.IDENTIFIER, ParameterDeclaration);
+            Expect(TokenCategory.PARENTHESIS_CLOSE);
+            Optional(TokenCategory.COLON, Type);
+            Expect(TokenCategory.SEMICOLON);
+            Optional(TokenCategory.CONST, () =>
+            {
+                OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration);
+            });
+            Optional(TokenCategory.VAR, () =>
+            {
+                OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration);
+            });
+            Expect(TokenCategory.BEGIN);
+            ZeroOrMore(firstOfStatement, Statement);
+            Expect(TokenCategory.END);
+            Expect(TokenCategory.SEMICOLON);
+        }
 
         // The doc is probably wrong about this one becasue its litteraly the same as VariableDeclaration
         // Looks more like <identifier>:<type>;
         public void ParameterDeclaration()
         {
             Expect(TokenCategory.IDENTIFIER);
-            while (CurrentToken == TokenCategory.COMMA)
+            ZeroOrMore(TokenCategory.COMMA, () =>
             {
-                Expect(TokenCategory.COMMA);
                 Expect(TokenCategory.IDENTIFIER);
-            }
+            });
             Expect(TokenCategory.COLON);
             Type();
             Expect(TokenCategory.SEMICOLON);
@@ -310,28 +352,28 @@ namespace Chimera
 
         public void LogicOperator()
         {
-            ExpectAnyOf(logicOperators);
+            Expect(logicOperators);
         }
 
         public void RelationalExpression() { }
 
         public void RelationalOperator()
         {
-            ExpectAnyOf(relationalOperators);
+            Expect(relationalOperators);
         }
 
         public void SumExpression() { }
 
         public void SumOperator()
         {
-            ExpectAnyOf(sumOperators);
+            Expect(sumOperators);
         }
 
         public void MulExpression() { }
 
         public void MulOperator()
         {
-            ExpectAnyOf(mulOperators);
+            Expect(mulOperators);
         }
 
         public void UnaryExpression() { }
