@@ -21,6 +21,7 @@ namespace Chimera
         COLON,
         COMMA,
         SEMICOLON,
+        COLON_EQUAL,
         END,
         INTEGER,
         INT_LITERAL,

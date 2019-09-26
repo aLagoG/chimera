@@ -236,7 +236,7 @@ namespace Chimera
         public void ConstantDeclaration()
         {
             Expect(TokenCategory.IDENTIFIER);
-            Expect(TokenCategory.ASSIGN);
+            Expect(TokenCategory.COLON_EQUAL);
             Literal();
             Expect(TokenCategory.SEMICOLON);
         }

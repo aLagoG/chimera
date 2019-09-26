@@ -28,7 +28,7 @@ namespace Chimera
                 | (?<Identifier>    [a-z]\w*              )
                 | (?<IntLiteral>    \d+                   )
                 | (?<Semicolon>     ;                     )
-                | (?<Assign>        :=                    )
+                | (?<ColonEqual>    :=                    )
                 | (?<Comma>         ,                     )
                 | (?<Colon>         :                     )
                 | (?<ParOpen>       [(]                   )
