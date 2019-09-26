@@ -91,14 +91,21 @@ namespace Chimera
             };
 
         static readonly ISet<TokenCategory> firstOfLiteral =
-            new HashSet<TokenCategory>(simpleLiterals).UnionWith(new HashSet<TokenCategory>() {
+            new HashSet<TokenCategory>() {
+                TokenCategory.INT_LITERAL,
+                TokenCategory.STRING_LITERAL,
+                TokenCategory.TRUE,
+                TokenCategory.FALSE,
                 TokenCategory.CURLY_OPEN
-            });
+            };
 
         static readonly ISet<TokenCategory> firstOfType =
-            new HashSet<TokenCategory>(simpleTypes).UnionWith(new HashSet<TokenCategory>() {
+            new HashSet<TokenCategory>() {
+                TokenCategory.INTEGER,
+                TokenCategory.STRING,
+                TokenCategory.BOOLEAN,
                 TokenCategory.LIST
-            });
+            };
 
         IEnumerator<Token> tokenStream;
 
