@@ -135,35 +135,59 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void SimpleType()
+        public void ConstantDeclaration()
         {
-            ExpectAnyOf(simpleTypes);
-        }
-
-        public void ExitStatement()
-        {
-            Expect(TokenCategory.EXIT);
+            Expect(TokenCategory.IDENTIFIER);
+            Expect(TokenCategory.COLON_EQUAL);
+            Literal();
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void LogicOperator()
+        public void VariableDeclaration()
         {
-            ExpectAnyOf(logicOperators);
+            Expect(TokenCategory.IDENTIFIER);
+            while (CurrentToken == TokenCategory.COMMA)
+            {
+                Expect(TokenCategory.COMMA);
+                Expect(TokenCategory.IDENTIFIER);
+            }
+            Expect(TokenCategory.COLON);
+            Type();
+            Expect(TokenCategory.SEMICOLON);
         }
 
-        public void RelationalOperator()
+        public void Literal()
         {
-            ExpectAnyOf(relationalOperators);
+            if (CurrentToken == TokenCategory.CURLY_OPEN)
+            {
+                List();
+            }
+            else
+            {
+                SimpleLiteral();
+            }
         }
 
-        public void SumOperator()
+        public void SimpleLiteral()
         {
-            ExpectAnyOf(sumOperators);
+            ExpectAnyOf(simpleLiterals);
         }
 
-        public void MulOperator()
+        public void Type()
         {
-            ExpectAnyOf(mulOperators);
+            if (CurrentToken == TokenCategory.LIST)
+            {
+                ListType();
+            }
+            else
+            {
+                SimpleType();
+            }
+        }
+
+        public void SimpleType()
+        {
+            ExpectAnyOf(simpleTypes);
         }
 
         public void ListType()
@@ -171,11 +195,6 @@ namespace Chimera
             Expect(TokenCategory.LIST);
             Expect(TokenCategory.OF);
             SimpleType();
-        }
-
-        public void SimpleLiteral()
-        {
-            ExpectAnyOf(simpleLiterals);
         }
 
         public void List()
@@ -193,30 +212,7 @@ namespace Chimera
             Expect(TokenCategory.CURLY_CLOSE);
         }
 
-        public void Literal()
-        {
-            if (CurrentToken == TokenCategory.CURLY_OPEN)
-            {
-                List();
-            }
-            else
-            {
-                SimpleLiteral();
-            }
-        }
-
-        public void VariableDeclaration()
-        {
-            Expect(TokenCategory.IDENTIFIER);
-            while (CurrentToken == TokenCategory.COMMA)
-            {
-                Expect(TokenCategory.COMMA);
-                Expect(TokenCategory.IDENTIFIER);
-            }
-            Expect(TokenCategory.COLON);
-            Type();
-            Expect(TokenCategory.SEMICOLON);
-        }
+        public void ProcedureDeclaration() { }
 
         // The doc is probably wrong about this one becasue its litteraly the same as VariableDeclaration
         // Looks more like <identifier>:<type>;
@@ -233,28 +229,61 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void ConstantDeclaration()
+        public void Statement() { }
+
+        public void AssignmentStatement() { }
+
+        public void CallStatement() { }
+
+        public void IfStatement() { }
+
+        public void LoopStatement() { }
+
+        public void ForStatement() { }
+
+        public void ReturnStatement() { }
+
+        public void ExitStatement()
         {
-            Expect(TokenCategory.IDENTIFIER);
-            Expect(TokenCategory.COLON_EQUAL);
-            Literal();
+            Expect(TokenCategory.EXIT);
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void ProcedureDeclaration() { }
+        public void Expression() { }
 
-        public void Statement() { }
+        public void LogicExpression() { }
 
-        public void Type()
+        public void LogicOperator()
         {
-            if (CurrentToken == TokenCategory.LIST)
-            {
-                ListType();
-            }
-            else
-            {
-                SimpleType();
-            }
+            ExpectAnyOf(logicOperators);
         }
+
+        public void RelationalExpression() { }
+
+        public void RelationalOperator()
+        {
+            ExpectAnyOf(relationalOperators);
+        }
+
+        public void SumExpression() { }
+
+        public void SumOperator()
+        {
+            ExpectAnyOf(sumOperators);
+        }
+
+        public void MulExpression() { }
+
+        public void MulOperator()
+        {
+            ExpectAnyOf(mulOperators);
+        }
+
+        public void UnaryExpression() { }
+
+        public void SimpleExpression() { }
+
+        public void Call() { }
+
     }
 }
