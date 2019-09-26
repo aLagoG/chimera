@@ -90,6 +90,16 @@ namespace Chimera
                 TokenCategory.REM,
             };
 
+        static readonly ISet<TokenCategory> firstOfLiteral =
+            new HashSet<TokenCategory>(simpleLiterals).UnionWith(new HashSet<TokenCategory>() {
+                TokenCategory.CURLY_OPEN
+            });
+
+        static readonly ISet<TokenCategory> firstOfType =
+            new HashSet<TokenCategory>(simpleTypes).UnionWith(new HashSet<TokenCategory>() {
+                TokenCategory.LIST
+            });
+
         IEnumerator<Token> tokenStream;
 
         public Parser(IEnumerator<Token> tokenStream)
@@ -192,9 +202,13 @@ namespace Chimera
             {
                 List();
             }
-            else
+            else if (simpleLiterals.Contains(CurrentToken))
             {
                 SimpleLiteral();
+            }
+            else
+            {
+                throw new SyntaxError(firstOfLiteral, tokenStream.Current);
             }
         }
 
@@ -209,9 +223,13 @@ namespace Chimera
             {
                 ListType();
             }
-            else
+            else if (simpleTypes.Contains(CurrentToken))
             {
                 SimpleType();
+            }
+            else
+            {
+                throw new SyntaxError(firstOfType, tokenStream.Current);
             }
         }
 
