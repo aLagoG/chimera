@@ -375,7 +375,14 @@ namespace Chimera
             Expect(sumOperators);
         }
 
-        public void MulExpression() { }
+        public void MulExpression() {
+            UnaryExpression();
+            while(Has(unaryOperators)){
+                MulExpression();
+                MulOperator();
+                UnaryExpression();
+            }                
+        }
 
         public void MulOperator()
         {
