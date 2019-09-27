@@ -90,25 +90,23 @@ namespace Chimera
                 TokenCategory.REM,
             };
 
-        static readonly ISet<TokenCategory> firstOfLiteral =
-            new HashSet<TokenCategory>() {
-                TokenCategory.INT_LITERAL,
-                TokenCategory.STRING_LITERAL,
-                TokenCategory.TRUE,
-                TokenCategory.FALSE,
-                TokenCategory.CURLY_OPEN
-            };
+        static readonly ISet<TokenCategory> firstOfLiteral;
 
-        static readonly ISet<TokenCategory> firstOfType =
-            new HashSet<TokenCategory>() {
-                TokenCategory.INTEGER,
-                TokenCategory.STRING,
-                TokenCategory.BOOLEAN,
-                TokenCategory.LIST
-            };
+        static readonly ISet<TokenCategory> firstOfType;
 
         static readonly ISet<TokenCategory> firstOfStatement =
             new HashSet<TokenCategory>() { };
+
+        static readonly ISet<TokenCategory> unaryOperators =
+            new HashSet<TokenCategory>() { TokenCategory.NOT, TokenCategory.MINUS };
+
+        static readonly ISet<TokenCategory> firstOfUnaryExpression;
+
+        static readonly ISet<TokenCategory> firstOfSimpleExpression;
+
+        static readonly ISet<TokenCategory> firstOfCall;
+
+        static readonly ISet<TokenCategory> firstOfExpression;
 
         IEnumerator<Token> tokenStream;
 
@@ -116,6 +114,16 @@ namespace Chimera
         {
             this.tokenStream = tokenStream;
             this.tokenStream.MoveNext();
+
+            firstOfLiteral = new HashSet(simpleLiterals);
+            firstOfLiteral.Add(TokenCategory.CURLY_OPEN);
+
+            firstOfType = new HashSet(simpleTypes);
+            firstOfType.Add(TokenCategory.LIST);
+
+            firstOfUnaryExpression = new HashSet(unaryOperators);
+            firstOfUnaryExpression.Union(firstOfSimpleExpression);
+
         }
 
         public TokenCategory CurrentToken
@@ -232,11 +240,11 @@ namespace Chimera
 
         public void Literal()
         {
-            if (CurrentToken == TokenCategory.CURLY_OPEN)
+            if (Has(TokenCategory.CURLY_OPEN))
             {
                 List();
             }
-            else if (simpleLiterals.Contains(CurrentToken))
+            else if (Has(simpleLiterals))
             {
                 SimpleLiteral();
             }
@@ -312,8 +320,6 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        // The doc is probably wrong about this one becasue its litteraly the same as VariableDeclaration
-        // Looks more like <identifier>:<type>;
         public void ParameterDeclaration()
         {
             Expect(TokenCategory.IDENTIFIER);
@@ -376,11 +382,65 @@ namespace Chimera
             Expect(mulOperators);
         }
 
-        public void UnaryExpression() { }
+        public void UnaryExpression()
+        {
+            if (Has(unaryOperators))
+            {
+                UnaryExpression();
+            }
+            else if (Has(firstOfSimpleExpression))
+            {
+                SimpleExpression();
+            }
+            else
+            {
+                throw new SyntaxError(firstOfUnaryExpression, tokenStream.Current);
+            }
+        }
 
-        public void SimpleExpression() { }
+        public void SimpleExpression()
+        {
+            if (Has(TokenCategory.PARENTHESIS_OPEN))
+            {
+                Expect(TokenCategory.PARENTHESIS_OPEN);
+                Expression();
+                Expect(TokenCategory.PARENTHESIS_CLOSE);
+            }
+            else if (Has(firstOfCall))
+            {
+                Call();
+            }
+            else if (Has(TokenCategory.IDENTIFIER))
+            {
+                Expect(TokenCategory.IDENTIFIER);
+            }
+            else if (Has(firstOfLiteral))
+            {
+                Literal();
+            }
+            else
+            {
+                throw new SyntaxError(firstOfSimpleExpression, tokenStream.Current);
+            }
+            if (Has(TokenCategory.BRACKET_OPEN))
+            {
+                Expect(TokenCategory.BRACKET_OPEN);
+                Expression();
+                Expect(TokenCategory.BRACKET_CLOSE);
+            }
+        }
 
-        public void Call() { }
+        public void Call()
+        {
+            Expect(TokenCategory.IDENTIFIER);
+            Expect(TokenCategory.PARENTHESIS_OPEN);
+            if (Has(firstOfExpression))
+            {
+                Expression();
+                ZeroOrMore(TokenCategory.COMMA, Expression);
+            }
+            Expect(TokenCategory.PARENTHESIS_CLOSE);
+        }
 
     }
 }
