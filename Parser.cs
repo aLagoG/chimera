@@ -94,36 +94,49 @@ namespace Chimera
 
         static readonly ISet<TokenCategory> firstOfType;
 
-        static readonly ISet<TokenCategory> firstOfStatement =
-            new HashSet<TokenCategory>() { };
-
         static readonly ISet<TokenCategory> unaryOperators =
             new HashSet<TokenCategory>() { TokenCategory.NOT, TokenCategory.MINUS };
+
+        static readonly ISet<TokenCategory> firstOfStatement =
+            new HashSet<TokenCategory>() {
+                TokenCategory.IDENTIFIER,
+                TokenCategory.IF,
+                TokenCategory.LOOP,
+                TokenCategory.FOR,
+                TokenCategory.RETURN,
+                TokenCategory.EXIT
+            };
 
         static readonly ISet<TokenCategory> firstOfUnaryExpression;
 
         static readonly ISet<TokenCategory> firstOfSimpleExpression;
 
-        static readonly ISet<TokenCategory> firstOfCall;
-
         static readonly ISet<TokenCategory> firstOfExpression;
 
         IEnumerator<Token> tokenStream;
+
+        static Parser()
+        {
+            firstOfLiteral = new HashSet<TokenCategory>(simpleLiterals);
+            firstOfLiteral.Add(TokenCategory.CURLY_OPEN);
+
+            firstOfType = new HashSet<TokenCategory>(simpleTypes);
+            firstOfType.Add(TokenCategory.LIST);
+
+            firstOfUnaryExpression = new HashSet<TokenCategory>(unaryOperators);
+            firstOfUnaryExpression.UnionWith(firstOfSimpleExpression);
+
+            firstOfSimpleExpression = new HashSet<TokenCategory>(firstOfLiteral);
+            firstOfSimpleExpression.Add(TokenCategory.PARENTHESIS_OPEN);
+            firstOfSimpleExpression.Add(TokenCategory.IDENTIFIER);
+
+            firstOfExpression = new HashSet<TokenCategory>(firstOfUnaryExpression);
+        }
 
         public Parser(IEnumerator<Token> tokenStream)
         {
             this.tokenStream = tokenStream;
             this.tokenStream.MoveNext();
-
-            firstOfLiteral = new HashSet(simpleLiterals);
-            firstOfLiteral.Add(TokenCategory.CURLY_OPEN);
-
-            firstOfType = new HashSet(simpleTypes);
-            firstOfType.Add(TokenCategory.LIST);
-
-            firstOfUnaryExpression = new HashSet(unaryOperators);
-            firstOfUnaryExpression.Union(firstOfSimpleExpression);
-
         }
 
         public TokenCategory CurrentToken
@@ -332,17 +345,92 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void Statement() { }
+        public void Statement()
+        {
+            if (Has(TokenCategory.PARENTHESIS_OPEN))
+            {
+                Expect(TokenCategory.PARENTHESIS_OPEN);
+                Expression();
+                Expect(TokenCategory.PARENTHESIS_CLOSE);
+            }
+            else if (Has(TokenCategory.IDENTIFIER))
+            {
+                // This is one of call or identifier, but I'm not really sure how to do it
+                Call();
+                Expect(TokenCategory.IDENTIFIER);
+            }
+            else if (Has(firstOfLiteral))
+            {
+                Literal();
+            }
+            else
+            {
+                throw new SyntaxError(firstOfSimpleExpression, tokenStream.Current);
+            }
+        }
 
-        public void AssignmentStatement() { }
+        public void AssignmentStatement()
+        {
+            Expect(TokenCategory.IDENTIFIER);
+            Optional(TokenCategory.BRACKET_OPEN, () =>
+            {
+                Expression();
+                Expect(TokenCategory.BRACKET_CLOSE);
+            });
+            Expect(TokenCategory.COLON_EQUAL);
+            Expression();
+            Expect(TokenCategory.SEMICOLON);
+        }
 
-        public void CallStatement() { }
+        public void CallStatement()
+        {
+            Expect(TokenCategory.IDENTIFIER);
+            Expect(TokenCategory.PARENTHESIS_OPEN);
+            Optional(firstOfExpression, () =>
+            {
+                Expression();
+                ZeroOrMore(TokenCategory.COMMA, Expression);
+            });
+            Expect(TokenCategory.PARENTHESIS_CLOSE);
+            Expect(TokenCategory.SEMICOLON);
+        }
 
-        public void IfStatement() { }
+        public void IfStatement()
+        {
+            Expect(TokenCategory.IF);
+            Expression();
+            Expect(TokenCategory.THEN);
+            ZeroOrMore(firstOfStatement, Statement);
+            ZeroOrMore(TokenCategory.ELSEIF, () =>
+            {
+                Expression();
+                Expect(TokenCategory.THEN);
+                ZeroOrMore(firstOfStatement, Statement);
+            });
+            Optional(TokenCategory.ELSE, () => { ZeroOrMore(firstOfStatement, Statement); });
+            Expect(TokenCategory.END);
+            Expect(TokenCategory.SEMICOLON);
+        }
 
-        public void LoopStatement() { }
+        public void LoopStatement()
+        {
+            Expect(TokenCategory.LOOP);
+            ZeroOrMore(firstOfStatement, Statement);
+            Expect(TokenCategory.END);
+            Expect(TokenCategory.SEMICOLON);
+        }
 
-        public void ForStatement() { }
+        public void ForStatement()
+        {
+            Expect(TokenCategory.FOR);
+            Expect(TokenCategory.IDENTIFIER);
+            Expect(TokenCategory.IN);
+            Expression();
+            Expect(TokenCategory.DO);
+            ZeroOrMore(firstOfStatement, Statement);
+            Expect(TokenCategory.END);
+            Expect(TokenCategory.SEMICOLON);
+        }
 
         public void ReturnStatement()
         {
@@ -430,12 +518,10 @@ namespace Chimera
                 Expression();
                 Expect(TokenCategory.PARENTHESIS_CLOSE);
             }
-            else if (Has(firstOfCall))
-            {
-                Call();
-            }
             else if (Has(TokenCategory.IDENTIFIER))
             {
+                //This is wrong, because first of call would be identifier, gotta figure that out
+                Call();
                 Expect(TokenCategory.IDENTIFIER);
             }
             else if (Has(firstOfLiteral))
