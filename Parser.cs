@@ -344,7 +344,12 @@ namespace Chimera
 
         public void ForStatement() { }
 
-        public void ReturnStatement() { }
+        public void ReturnStatement()
+        {
+            Expect(TokenCategory.RETURN);
+            Optional(firstOfExpression, Expression);
+            Expect(TokenCategory.SEMICOLON);
+        }
 
         public void ExitStatement()
         {
@@ -352,30 +357,49 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void Expression() { }
+        public void Expression()
+        {
+            LogicExpression();
+        }
 
-        public void LogicExpression() { }
+        public void LogicExpression()
+        {
+            RelationalExpression();
+            ZeroOrMore(logicOperators, RelationalExpression);
+        }
 
         public void LogicOperator()
         {
             Expect(logicOperators);
         }
 
-        public void RelationalExpression() { }
+        public void RelationalExpression()
+        {
+            SumExpression();
+            ZeroOrMore(relationalOperators, SumExpression);
+        }
 
         public void RelationalOperator()
         {
             Expect(relationalOperators);
         }
 
-        public void SumExpression() { }
+        public void SumExpression()
+        {
+            MulExpression();
+            ZeroOrMore(sumOperators, MulExpression);
+        }
 
         public void SumOperator()
         {
             Expect(sumOperators);
         }
 
-        public void MulExpression() { }
+        public void MulExpression()
+        {
+            UnaryExpression();
+            ZeroOrMore(mulOperators, UnaryExpression);
+        }
 
         public void MulOperator()
         {
@@ -422,12 +446,11 @@ namespace Chimera
             {
                 throw new SyntaxError(firstOfSimpleExpression, tokenStream.Current);
             }
-            if (Has(TokenCategory.BRACKET_OPEN))
+            Optional(TokenCategory.BRACKET_OPEN, () =>
             {
-                Expect(TokenCategory.BRACKET_OPEN);
                 Expression();
                 Expect(TokenCategory.BRACKET_CLOSE);
-            }
+            });
         }
 
         public void Call()
