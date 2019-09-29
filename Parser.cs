@@ -113,6 +113,13 @@ namespace Chimera
 
         static readonly ISet<TokenCategory> firstOfExpression;
 
+        static readonly ISet<TokenCategory> firstOfAssignmentOrCallStatement =
+            new HashSet<TokenCategory>() {
+                TokenCategory.PARENTHESIS_OPEN,
+                TokenCategory.BRACKET_OPEN,
+                TokenCategory.COLON_EQUAL
+            };
+
         IEnumerator<Token> tokenStream;
 
         static Parser()
@@ -123,12 +130,12 @@ namespace Chimera
             firstOfType = new HashSet<TokenCategory>(simpleTypes);
             firstOfType.Add(TokenCategory.LIST);
 
-            firstOfUnaryExpression = new HashSet<TokenCategory>(unaryOperators);
-            firstOfUnaryExpression.UnionWith(firstOfSimpleExpression);
-
             firstOfSimpleExpression = new HashSet<TokenCategory>(firstOfLiteral);
             firstOfSimpleExpression.Add(TokenCategory.PARENTHESIS_OPEN);
             firstOfSimpleExpression.Add(TokenCategory.IDENTIFIER);
+
+            firstOfUnaryExpression = new HashSet<TokenCategory>(unaryOperators);
+            firstOfUnaryExpression.UnionWith(firstOfSimpleExpression);
 
             firstOfExpression = new HashSet<TokenCategory>(firstOfUnaryExpression);
         }
@@ -184,32 +191,41 @@ namespace Chimera
             }
         }
 
-        public void Optional<T>(T category, Action onSuccess
+        public void Optional<T>(T category, Action onSuccess, bool expect = false
         )
         {
             if (Has(category))
             {
-                Expect(category);
+                if (expect)
+                {
+                    Expect(category);
+                }
                 onSuccess();
             }
         }
 
-        public void ZeroOrMore<T>(T category, Action onSucces
+        public void ZeroOrMore<T>(T category, Action onSucces, bool expect = false
         )
         {
             while (Has(category))
             {
-                Expect(category);
+                if (expect)
+                {
+                    Expect(category);
+                }
                 onSucces();
             }
         }
 
-        public void OneOrMore<T>(T category, Action onSucces
+        public void OneOrMore<T>(T category, Action onSucces, bool expect = false
         )
         {
             do
             {
-                Expect(category);
+                if (expect)
+                {
+                    Expect(category);
+                }
                 onSucces();
             } while (Has(category));
         }
@@ -219,11 +235,11 @@ namespace Chimera
             Optional(TokenCategory.CONST, () =>
             {
                 OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration);
-            });
+            }, true);
             Optional(TokenCategory.VAR, () =>
             {
                 OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration);
-            });
+            }, true);
             ZeroOrMore(TokenCategory.PROCEDURE, ProcedureDeclaration);
             Expect(TokenCategory.PROGRAM);
             ZeroOrMore(firstOfStatement, Statement);
@@ -245,7 +261,7 @@ namespace Chimera
             ZeroOrMore(TokenCategory.COMMA, () =>
             {
                 Expect(TokenCategory.IDENTIFIER);
-            });
+            }, true);
             Expect(TokenCategory.COLON);
             Type();
             Expect(TokenCategory.SEMICOLON);
@@ -305,8 +321,8 @@ namespace Chimera
             Expect(TokenCategory.CURLY_OPEN);
             Optional(simpleLiterals, () =>
             {
-                ZeroOrMore(TokenCategory.COMMA, SimpleLiteral);
-            });
+                ZeroOrMore(TokenCategory.COMMA, SimpleLiteral, true);
+            }, true);
             Expect(TokenCategory.CURLY_CLOSE);
         }
 
@@ -317,16 +333,16 @@ namespace Chimera
             Expect(TokenCategory.PARENTHESIS_OPEN);
             ZeroOrMore(TokenCategory.IDENTIFIER, ParameterDeclaration);
             Expect(TokenCategory.PARENTHESIS_CLOSE);
-            Optional(TokenCategory.COLON, Type);
+            Optional(TokenCategory.COLON, Type, true);
             Expect(TokenCategory.SEMICOLON);
             Optional(TokenCategory.CONST, () =>
             {
                 OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration);
-            });
+            }, true);
             Optional(TokenCategory.VAR, () =>
             {
                 OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration);
-            });
+            }, true);
             Expect(TokenCategory.BEGIN);
             ZeroOrMore(firstOfStatement, Statement);
             Expect(TokenCategory.END);
@@ -339,7 +355,7 @@ namespace Chimera
             ZeroOrMore(TokenCategory.COMMA, () =>
             {
                 Expect(TokenCategory.IDENTIFIER);
-            });
+            }, true);
             Expect(TokenCategory.COLON);
             Type();
             Expect(TokenCategory.SEMICOLON);
@@ -347,52 +363,65 @@ namespace Chimera
 
         public void Statement()
         {
-            if (Has(TokenCategory.PARENTHESIS_OPEN))
+            if (Has(TokenCategory.IDENTIFIER))
             {
-                Expect(TokenCategory.PARENTHESIS_OPEN);
-                Expression();
-                Expect(TokenCategory.PARENTHESIS_CLOSE);
-            }
-            else if (Has(TokenCategory.IDENTIFIER))
-            {
-                // This is one of call or identifier, but I'm not really sure how to do it
-                Call();
                 Expect(TokenCategory.IDENTIFIER);
+                AssignmentOrCallStatement();
             }
-            else if (Has(firstOfLiteral))
+            else if (Has(TokenCategory.IF))
             {
-                Literal();
+                IfStatement();
+            }
+            else if (Has(TokenCategory.LOOP))
+            {
+                LoopStatement();
+            }
+            else if (Has(TokenCategory.FOR))
+            {
+                ForStatement();
+            }
+            else if (Has(TokenCategory.RETURN))
+            {
+                ReturnStatement();
+            }
+            else if (Has(TokenCategory.EXIT))
+            {
+                ExitStatement();
             }
             else
             {
-                throw new SyntaxError(firstOfSimpleExpression, tokenStream.Current);
+                throw new SyntaxError(firstOfStatement, tokenStream.Current);
             }
         }
 
-        public void AssignmentStatement()
+        public void AssignmentOrCallStatement()
         {
-            Expect(TokenCategory.IDENTIFIER);
-            Optional(TokenCategory.BRACKET_OPEN, () =>
+            if (Has(TokenCategory.PARENTHESIS_OPEN))
             {
-                Expression();
-                Expect(TokenCategory.BRACKET_CLOSE);
-            });
-            Expect(TokenCategory.COLON_EQUAL);
-            Expression();
-            Expect(TokenCategory.SEMICOLON);
-        }
-
-        public void CallStatement()
-        {
-            Expect(TokenCategory.IDENTIFIER);
-            Expect(TokenCategory.PARENTHESIS_OPEN);
-            Optional(firstOfExpression, () =>
+                Expect(TokenCategory.PARENTHESIS_OPEN);
+                Optional(firstOfExpression, () =>
+                {
+                    Expression();
+                    ZeroOrMore(TokenCategory.COMMA, Expression, true);
+                });
+                Expect(TokenCategory.PARENTHESIS_CLOSE);
+                Expect(TokenCategory.SEMICOLON);
+            }
+            else if (Has(TokenCategory.BRACKET_OPEN) || Has(TokenCategory.COLON_EQUAL))
             {
+                Optional(TokenCategory.BRACKET_OPEN, () =>
+                {
+                    Expression();
+                    Expect(TokenCategory.BRACKET_CLOSE);
+                }, true);
+                Expect(TokenCategory.COLON_EQUAL);
                 Expression();
-                ZeroOrMore(TokenCategory.COMMA, Expression);
-            });
-            Expect(TokenCategory.PARENTHESIS_CLOSE);
-            Expect(TokenCategory.SEMICOLON);
+                Expect(TokenCategory.SEMICOLON);
+            }
+            else
+            {
+                throw new SyntaxError(firstOfAssignmentOrCallStatement, tokenStream.Current);
+            }
         }
 
         public void IfStatement()
@@ -406,8 +435,8 @@ namespace Chimera
                 Expression();
                 Expect(TokenCategory.THEN);
                 ZeroOrMore(firstOfStatement, Statement);
-            });
-            Optional(TokenCategory.ELSE, () => { ZeroOrMore(firstOfStatement, Statement); });
+            }, true);
+            Optional(TokenCategory.ELSE, () => { ZeroOrMore(firstOfStatement, Statement); }, true);
             Expect(TokenCategory.END);
             Expect(TokenCategory.SEMICOLON);
         }
@@ -453,7 +482,7 @@ namespace Chimera
         public void LogicExpression()
         {
             RelationalExpression();
-            ZeroOrMore(logicOperators, RelationalExpression);
+            ZeroOrMore(logicOperators, RelationalExpression, true);
         }
 
         public void LogicOperator()
@@ -464,7 +493,7 @@ namespace Chimera
         public void RelationalExpression()
         {
             SumExpression();
-            ZeroOrMore(relationalOperators, SumExpression);
+            ZeroOrMore(relationalOperators, SumExpression, true);
         }
 
         public void RelationalOperator()
@@ -475,7 +504,7 @@ namespace Chimera
         public void SumExpression()
         {
             MulExpression();
-            ZeroOrMore(sumOperators, MulExpression);
+            ZeroOrMore(sumOperators, MulExpression, true);
         }
 
         public void SumOperator()
@@ -486,7 +515,7 @@ namespace Chimera
         public void MulExpression()
         {
             UnaryExpression();
-            ZeroOrMore(mulOperators, UnaryExpression);
+            ZeroOrMore(mulOperators, UnaryExpression, true);
         }
 
         public void MulOperator()
@@ -498,6 +527,7 @@ namespace Chimera
         {
             if (Has(unaryOperators))
             {
+                Expect(unaryOperators);
                 UnaryExpression();
             }
             else if (Has(firstOfSimpleExpression))
@@ -520,9 +550,18 @@ namespace Chimera
             }
             else if (Has(TokenCategory.IDENTIFIER))
             {
-                //This is wrong, because first of call would be identifier, gotta figure that out
-                Call();
                 Expect(TokenCategory.IDENTIFIER);
+                // May be a call
+                if (Has(TokenCategory.PARENTHESIS_OPEN))
+                {
+                    Expect(TokenCategory.PARENTHESIS_OPEN);
+                    if (Has(firstOfExpression))
+                    {
+                        Expression();
+                        ZeroOrMore(TokenCategory.COMMA, Expression, true);
+                    }
+                    Expect(TokenCategory.PARENTHESIS_CLOSE);
+                }
             }
             else if (Has(firstOfLiteral))
             {
@@ -536,19 +575,7 @@ namespace Chimera
             {
                 Expression();
                 Expect(TokenCategory.BRACKET_CLOSE);
-            });
-        }
-
-        public void Call()
-        {
-            Expect(TokenCategory.IDENTIFIER);
-            Expect(TokenCategory.PARENTHESIS_OPEN);
-            if (Has(firstOfExpression))
-            {
-                Expression();
-                ZeroOrMore(TokenCategory.COMMA, Expression);
-            }
-            Expect(TokenCategory.PARENTHESIS_CLOSE);
+            }, true);
         }
 
     }

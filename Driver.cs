@@ -76,7 +76,7 @@ namespace Chimera
                 }
                 catch (Exception e)
                 {
-
+                    Console.Error.WriteLine($"Exception on file: '{inputPath}'");
                     if (e is FileNotFoundException || e is SyntaxError)
                     {
                         Console.Error.WriteLine(e.Message);
