@@ -1,41 +1,11 @@
 /*
 Chimera
-Date: 23-Sep-2019
+Date: 7-Oct-2019
 Authors:
 	A01371779 Andres De Lago Gomez
 	A01377503 Ian Neumann Sanchez
 	A01371719 Servio Tulio Reyes Castillo
 */
-
-// Buttercup examples:
-
-// public void Statement() {
-//     switch (CurrentToken)
-//     {
-//         case TokenCategory.IDENTIFIER:
-//             Assignment();
-//             break;
-//         case TokenCategory.PRINT:
-//             Print();
-//             break;
-//         case TokenCategory.IF:
-//             If();
-//             break;
-//         default:
-//             throw new SyntaxError(firstOfStatement,
-//                                   tokenStream.Current);
-//     }
-// }
-
-// public void If() {
-//     Expect(TokenCategory.IF);
-//     Expression();
-//     Expect(TokenCategory.THEN);
-//     while (firstOfStatement.Contains(CurrentToken)) {
-//         Statement();
-//     }
-//     Expect(TokenCategory.END);
-// }
 
 using System;
 using System.Collections.Generic;
