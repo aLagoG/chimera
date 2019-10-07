@@ -1,12 +1,11 @@
 /*
 Chimera
-Date: 7-Oct-2019
+Date: 21-Oct-2019
 Authors:
 	A01371779 Andres De Lago Gomez
 	A01377503 Ian Neumann Sanchez
 	A01371719 Servio Tulio Reyes Castillo
 */
-
 using System;
 using System.Collections.Generic;
 
@@ -137,7 +136,7 @@ namespace Chimera
         }
 
 
-        public void Expect<T>(T category)
+        public Node Expect<T>(T category)
         {
             if (Has(category))
             {
@@ -161,7 +160,7 @@ namespace Chimera
             }
         }
 
-        public void Optional<T>(T category, Action onSuccess, bool expect = false
+        public Node Optional<T>(T category, Action onSuccess, bool expect = false
         )
         {
             if (Has(category))
@@ -174,7 +173,7 @@ namespace Chimera
             }
         }
 
-        public void ZeroOrMore<T>(T category, Action onSucces, bool expect = false
+        public Node ZeroOrMore<T>(T category, Action onSucces, bool expect = false
         )
         {
             while (Has(category))
@@ -187,7 +186,7 @@ namespace Chimera
             }
         }
 
-        public void OneOrMore<T>(T category, Action onSucces, bool expect = false
+        public Node OneOrMore<T>(T category, Action onSucces, bool expect = false
         )
         {
             do
@@ -200,7 +199,7 @@ namespace Chimera
             } while (Has(category));
         }
 
-        public void Program()
+        public Node Program()
         {
             Optional(TokenCategory.CONST, () =>
             {
@@ -217,7 +216,7 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void ConstantDeclaration()
+        public Node ConstantDeclaration()
         {
             Expect(TokenCategory.IDENTIFIER);
             Expect(TokenCategory.COLON_EQUAL);
@@ -225,7 +224,7 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void VariableDeclaration()
+        public Node VariableDeclaration()
         {
             Expect(TokenCategory.IDENTIFIER);
             ZeroOrMore(TokenCategory.COMMA, () =>
@@ -237,7 +236,7 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void Literal()
+        public Node Literal()
         {
             if (Has(TokenCategory.CURLY_OPEN))
             {
@@ -253,12 +252,12 @@ namespace Chimera
             }
         }
 
-        public void SimpleLiteral()
+        public Node SimpleLiteral()
         {
             Expect(simpleLiterals);
         }
 
-        public void Type()
+        public Node Type()
         {
             if (CurrentToken == TokenCategory.LIST)
             {
@@ -274,19 +273,19 @@ namespace Chimera
             }
         }
 
-        public void SimpleType()
+        public Node SimpleType()
         {
             Expect(simpleTypes);
         }
 
-        public void ListType()
+        public Node ListType()
         {
             Expect(TokenCategory.LIST);
             Expect(TokenCategory.OF);
             SimpleType();
         }
 
-        public void List()
+        public Node List()
         {
             Expect(TokenCategory.CURLY_OPEN);
             Optional(simpleLiterals, () =>
@@ -296,7 +295,7 @@ namespace Chimera
             Expect(TokenCategory.CURLY_CLOSE);
         }
 
-        public void ProcedureDeclaration()
+        public Node ProcedureDeclaration()
         {
             Expect(TokenCategory.PROCEDURE);
             Expect(TokenCategory.IDENTIFIER);
@@ -319,7 +318,7 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void ParameterDeclaration()
+        public Node ParameterDeclaration()
         {
             Expect(TokenCategory.IDENTIFIER);
             ZeroOrMore(TokenCategory.COMMA, () =>
@@ -331,7 +330,7 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void Statement()
+        public Node Statement()
         {
             if (Has(TokenCategory.IDENTIFIER))
             {
@@ -364,7 +363,7 @@ namespace Chimera
             }
         }
 
-        public void AssignmentOrCallStatement()
+        public Node AssignmentOrCallStatement()
         {
             if (Has(TokenCategory.PARENTHESIS_OPEN))
             {
@@ -394,7 +393,7 @@ namespace Chimera
             }
         }
 
-        public void IfStatement()
+        public Node IfStatement()
         {
             Expect(TokenCategory.IF);
             Expression();
@@ -411,7 +410,7 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void LoopStatement()
+        public Node LoopStatement()
         {
             Expect(TokenCategory.LOOP);
             ZeroOrMore(firstOfStatement, Statement);
@@ -419,7 +418,7 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void ForStatement()
+        public Node ForStatement()
         {
             Expect(TokenCategory.FOR);
             Expect(TokenCategory.IDENTIFIER);
@@ -431,69 +430,69 @@ namespace Chimera
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void ReturnStatement()
+        public Node ReturnStatement()
         {
             Expect(TokenCategory.RETURN);
             Optional(firstOfExpression, Expression);
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void ExitStatement()
+        public Node ExitStatement()
         {
             Expect(TokenCategory.EXIT);
             Expect(TokenCategory.SEMICOLON);
         }
 
-        public void Expression()
+        public Node Expression()
         {
             LogicExpression();
         }
 
-        public void LogicExpression()
+        public Node LogicExpression()
         {
             RelationalExpression();
             ZeroOrMore(logicOperators, RelationalExpression, true);
         }
 
-        public void LogicOperator()
+        public Node LogicOperator()
         {
             Expect(logicOperators);
         }
 
-        public void RelationalExpression()
+        public Node RelationalExpression()
         {
             SumExpression();
             ZeroOrMore(relationalOperators, SumExpression, true);
         }
 
-        public void RelationalOperator()
+        public Node RelationalOperator()
         {
             Expect(relationalOperators);
         }
 
-        public void SumExpression()
+        public Node SumExpression()
         {
             MulExpression();
             ZeroOrMore(sumOperators, MulExpression, true);
         }
 
-        public void SumOperator()
+        public Node SumOperator()
         {
             Expect(sumOperators);
         }
 
-        public void MulExpression()
+        public Node MulExpression()
         {
             UnaryExpression();
             ZeroOrMore(mulOperators, UnaryExpression, true);
         }
 
-        public void MulOperator()
+        public Node MulOperator()
         {
             Expect(mulOperators);
         }
 
-        public void UnaryExpression()
+        public Node UnaryExpression()
         {
             if (Has(unaryOperators))
             {
@@ -510,7 +509,7 @@ namespace Chimera
             }
         }
 
-        public void SimpleExpression()
+        public Node SimpleExpression()
         {
             if (Has(TokenCategory.PARENTHESIS_OPEN))
             {

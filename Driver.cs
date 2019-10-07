@@ -1,6 +1,6 @@
 /*
 Chimera
-Date: 7-Oct-2019
+Date: 21-Oct-2019
 Authors:
 	A01371779 Andres De Lago Gomez
 	A01377503 Ian Neumann Sanchez
@@ -18,7 +18,7 @@ namespace Chimera
     public class Driver
     {
 
-        const string VERSION = "0.2";
+        const string VERSION = "0.3";
 
         //-----------------------------------------------------------
         static readonly string[] ReleaseIncludes = {
@@ -71,8 +71,8 @@ namespace Chimera
                 {
                     var input = File.ReadAllText(inputPath);
                     var parser = new Parser(new Scanner(input).Start().GetEnumerator());
-                    parser.Program();
-                    Console.WriteLine("Syntax OK.");
+                    var program = parser.Program();
+                    Console.Write(program.ToStringTree());
                 }
                 catch (Exception e)
                 {
