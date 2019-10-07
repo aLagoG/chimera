@@ -439,8 +439,15 @@ namespace Chimera
 
         public Node ExitStatement()
         {
-            Expect(TokenCategory.EXIT);
-            Expect(TokenCategory.SEMICOLON);
+            if(CurrentToken == TokenCategory.EXIT){
+                var exit_node = new ExitNode() { 
+                        AnchorToken = Expect(TokenCategory.EXIT) 
+                    };
+                Expect(TokenCategory.SEMICOLON);
+                return exit_node;
+            }
+            throw new SyntaxError(firstOfOperator, 
+                                    tokenStream.Current);
         }
 
         public Node Expression()
@@ -455,8 +462,28 @@ namespace Chimera
         }
 
         public Node LogicOperator()
-        {
-            Expect(logicOperators);
+        {   
+            switch (CurrentToken) {
+
+                case TokenCategory.AND:
+                    return new AndNode() { 
+                        AnchorToken = Expect(TokenCategory.AND) 
+                    };
+
+                case TokenCategory.OR:
+                    return new OrNode() {
+                        AnchorToken = Expect(TokenCategory.OR)
+                    };
+
+                case TokenCategory.XOR:
+                    return new XorNode() {
+                        AnchorToken = Expect(TokenCategory.XOR)
+                    };         
+
+                default:
+                    throw new SyntaxError(firstOfOperator, 
+                                        tokenStream.Current);
+            }
         }
 
         public Node RelationalExpression()
@@ -467,7 +494,42 @@ namespace Chimera
 
         public Node RelationalOperator()
         {
-            Expect(relationalOperators);
+            switch (CurrentToken) {
+
+                case TokenCategory.EQUAL:
+                    return new EqualNode() { 
+                        AnchorToken = Expect(TokenCategory.EQUAL) 
+                    };
+
+                case TokenCategory.UNEQUAL:
+                    return new UnEqualNode() {
+                        AnchorToken = Expect(TokenCategory.UNEQUAL)
+                    };
+
+                case TokenCategory.LESS_THAN:
+                    return new LessThanNode() {
+                        AnchorToken = Expect(TokenCategory.LESS_THAN)
+                    };
+
+                case TokenCategory.MORE_THAN:
+                    return new MoreThanNode() {
+                        AnchorToken = Expect(TokenCategory.MORE_THAN)
+                    };    
+
+                case TokenCategory.LESS_THAN_EQUAL:
+                    return new LessThanEqualNode() {
+                        AnchorToken = Expect(TokenCategory.LESS_THAN_EQUAL)
+                    };   
+
+                case TokenCategory.MORE_THAN_EQUAL:
+                    return new MoreThanEqualNode() {
+                        AnchorToken = Expect(TokenCategory.MORE_THAN_EQUAL)
+                    };    
+
+                default:
+                    throw new SyntaxError(firstOfOperator, 
+                                        tokenStream.Current);
+            }
         }
 
         public Node SumExpression()
@@ -477,8 +539,23 @@ namespace Chimera
         }
 
         public Node SumOperator()
-        {
-            Expect(sumOperators);
+        {   
+            switch(CurrentToken){
+
+                case TokenCategory.MINUS:
+                    return new MinusNode() {
+                        AnchorToken = Expect(TokenCategory.MINUS)
+                    }; 
+
+                case TokenCategory.PLUS:
+                    return new PlusNode() {
+                        AnchorToken = Expect(TokenCategory.PLUS)
+                    };      
+
+                default:
+                    throw new SyntaxError(firstOfOperator, 
+                                        tokenStream.Current);
+            }
         }
 
         public Node MulExpression()
@@ -489,7 +566,27 @@ namespace Chimera
 
         public Node MulOperator()
         {
-            Expect(mulOperators);
+            switch(CurrentToken){
+
+                case TokenCategory.TIMES:
+                    return new TimesNode() {
+                        AnchorToken = Expect(TokenCategory.TIMES)
+                    }; 
+
+                case TokenCategory.DIV:
+                    return new DivNode() {
+                        AnchorToken = Expect(TokenCategory.DIV)
+                    };
+
+                case TokenCategory.REM:
+                    return new RemNode() {
+                        AnchorToken = Expect(TokenCategory.REM)
+                    };         
+
+                default:
+                    throw new SyntaxError(firstOfOperator, 
+                                        tokenStream.Current);
+            }
         }
 
         public Node UnaryExpression()

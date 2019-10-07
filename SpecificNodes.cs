@@ -11,5 +11,19 @@ Authors:
 namespace Chimera {    
 
     // Declaration Example: class Program: Node {}
-
+    class AndNode: Node {}
+    class OrNode: Node {}
+    class XorNode: Node {}
+    class EqualNode: Node {}
+    class UnEqualNode: Node {}
+    class LessThanNode: Node {}
+    class MoreThanNode: Node {}
+    class LessThanEqualNode: Node {}
+    class MoreThanEqualNode: Node {}
+    class MinusNode: Node {}
+    class PlusNode: Node {}
+    class TimesNode: Node {}
+    class DivNode: Node {}
+    class RemNode: Node {}
+    class ExitNode: Node {}
 }
