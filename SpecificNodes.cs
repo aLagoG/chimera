@@ -26,4 +26,13 @@ namespace Chimera {
     class DivNode: Node {}
     class RemNode: Node {}
     class ExitNode: Node {}
+    class IntegerNode: Node {}
+    class StringNode: Node {}
+    class BooleanNode: Node {}
+    class ListTypeNode: Node {}
+    class TypeNode: Node {}
+    class IntLiteralNode: Node {}
+    class StringLiteralNode: Node {}
+    class TrueNode: Node {}
+    class FalseNode: Node {}
 }
