@@ -223,11 +223,14 @@ namespace Chimera
         }
 
         public Node ConstantDeclaration()
-        {
-            Expect(TokenCategory.IDENTIFIER);
+        {   
+            var constant_node = new IdentifierNode () {
+                AnchorToken = Expect(TokenCategory.IDENTIFIER)
+            };
             Expect(TokenCategory.COLON_EQUAL);
-            Literal();
+            constant_node.Add(Literal());
             Expect(TokenCategory.SEMICOLON);
+            return constant_node;
         }
 
         public Node VariableDeclaration()
@@ -243,14 +246,17 @@ namespace Chimera
         }
 
         public Node Literal()
-        {
+        {   
+            var literal_node = new LiteralNode();
             if (Has(TokenCategory.CURLY_OPEN))
             {
-                List();
+                literal_node.Add(List());
+                return literal_node;
             }
             else if (Has(simpleLiterals))
             {
-                SimpleLiteral();
+                literal_node.Add(SimpleLiteral());
+                return literal_node;
             }
             else
             {
@@ -391,27 +397,27 @@ namespace Chimera
             if (Has(TokenCategory.IDENTIFIER))
             {
                 Expect(TokenCategory.IDENTIFIER);
-                AssignmentOrCallStatement();
+                return AssignmentOrCallStatement();
             }
             else if (Has(TokenCategory.IF))
             {
-                IfStatement();
+                return IfStatement();
             }
             else if (Has(TokenCategory.LOOP))
             {
-                LoopStatement();
+                return LoopStatement();
             }
             else if (Has(TokenCategory.FOR))
             {
-                ForStatement();
+                return ForStatement();
             }
             else if (Has(TokenCategory.RETURN))
             {
-                ReturnStatement();
+                return ReturnStatement();
             }
             else if (Has(TokenCategory.EXIT))
             {
-                ExitStatement();
+                return ExitStatement();
             }
             else
             {
@@ -508,7 +514,7 @@ namespace Chimera
 
         public Node Expression()
         {
-            LogicExpression();
+            return LogicExpression();
         }
 
         public Node LogicExpression()
@@ -646,15 +652,18 @@ namespace Chimera
         }
 
         public Node UnaryExpression()
-        {
+        {   
+            var unary_expression = new UnaryExpressionNode();
             if (Has(unaryOperators))
             {
-                Expect(unaryOperators);
-                UnaryExpression();
+                unary_expression.AnchorToken = Expect(unaryOperators);
+                unary_expression.Add(UnaryExpression());
+                return unary_expression;
             }
             else if (Has(firstOfSimpleExpression))
             {
-                SimpleExpression();
+                unary_expression.Add(SimpleExpression());
+                return unary_expression;
             }
             else
             {

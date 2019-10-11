@@ -35,4 +35,7 @@ namespace Chimera {
     class StringLiteralNode: Node {}
     class TrueNode: Node {}
     class FalseNode: Node {}
+    class LiteralNode: Node {}
+    class IdentifierNode: Node {}
+    class UnaryExpressionNode: Node {}
 }
