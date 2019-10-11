@@ -56,5 +56,25 @@ namespace Chimera {
                 TreeTraversal(child, indent + "  ", sb);
             }
         }
+
+        public string ToStringTreeDot()
+        {
+            var sb = new StringBuilder();
+            sb.Append("digraph AST {\n");
+            TreeTraversalDot(this, "", sb);
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        static void TreeTraversalDot(Node node, string indent, StringBuilder sb)
+        {
+            sb.Append($"\t{node.id} [label=\"{node.GetType().Name}\\n{node.AnchorToken}\"];\n");
+            foreach (var child in node.children)
+            {
+                sb.Append($"\t{node.id}->{child.id};\n");
+                TreeTraversalDot(child, indent + "  ", sb);
+            }
+        }
+
     }
 }
