@@ -29,6 +29,13 @@ namespace Chimera {
             children.Add(node);
         }
 
+        public void AddMultiple(List<Node> nodes){
+            foreach (Node node in nodes)
+            {
+                children.Add(node);
+            }
+        }
+
         public IEnumerator<Node> GetEnumerator() {
             return children.GetEnumerator();
         }
@@ -54,25 +61,6 @@ namespace Chimera {
             sb.Append('\n');
             foreach (var child in node.children) {
                 TreeTraversal(child, indent + "  ", sb);
-            }
-        }
-
-        public string ToStringTreeDot()
-        {
-            var sb = new StringBuilder();
-            sb.Append("digraph AST {\n");
-            TreeTraversalDot(this, "", sb);
-            sb.Append("}");
-            return sb.ToString();
-        }
-
-        static void TreeTraversalDot(Node node, string indent, StringBuilder sb)
-        {
-            sb.Append($"\t{node.id} [label=\"{node.GetType().Name}\\n{node.AnchorToken}\"];\n");
-            foreach (var child in node.children)
-            {
-                sb.Append($"\t{node.id}->{child.id};\n");
-                TreeTraversalDot(child, indent + "  ", sb);
             }
         }
 

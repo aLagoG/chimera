@@ -36,6 +36,25 @@ namespace Chimera {
     class TrueNode: Node {}
     class FalseNode: Node {}
     class LiteralNode: Node {}
+    class ConstantDeclarationNode: Node {}
     class IdentifierNode: Node {}
     class UnaryExpressionNode: Node {}
+    class MulExpessionNode: Node {}
+    class SumExpressionNode: Node {}
+    class RelationalExpressionNode: Node {}
+    class LogicalExpressionNode: Node {}
+    class ReturnStatementNode: Node {}
+    class LoopStatementNode: Node {}
+    class ListNode: Node {}
+    class VariableDeclarationNode: Node {}
+    class ForStatementNode: Node {}
+    class StatementNode: Node {}
+    class IfStatementNode: Node {}
+    class ElifStatementNode: Node {}
+    class ElseStatementNode: Node {}
+    class ProgramNode: Node {}
+    class ProcedureDeclarationNode: Node {}
+    class ParameterDeclarationNode: Node {}
+    class SimpleExpressionNode: Node {}
+    class AssignmentOrCallStatementNode: Node {}
 }
