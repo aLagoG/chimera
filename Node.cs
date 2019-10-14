@@ -26,6 +26,7 @@ namespace Chimera
                 { TokenCategory.AND, typeof(AndNode) },
                 { TokenCategory.OR, typeof(OrNode) },
                 { TokenCategory.XOR, typeof(XorNode) },
+                { TokenCategory.NOT, typeof(NotNode) },
 
                 { TokenCategory.TIMES, typeof(TimesNode) },
                 { TokenCategory.DIV, typeof(DivNode) },
@@ -33,8 +34,8 @@ namespace Chimera
 
                 { TokenCategory.EQUAL, typeof(EqualNode) },
                 { TokenCategory.UNEQUAL, typeof(UnequalNode) },
-                { TokenCategory.LESS_THAN, typeof(LessThanEqualNode) },
-                { TokenCategory.MORE_THAN, typeof(MoreThanEqualNode) },
+                { TokenCategory.LESS_THAN, typeof(LessThanNode) },
+                { TokenCategory.MORE_THAN, typeof(MoreThanNode) },
                 { TokenCategory.LESS_THAN_EQUAL, typeof(LessThanEqualNode) },
                 { TokenCategory.MORE_THAN_EQUAL, typeof(MoreThanEqualNode) },
 
