@@ -56,9 +56,13 @@ namespace Chimera
 
         public override string ToString()
         {
-            // return string.Format("{{{0}, \"{1}\", @({2}, {3})}}",
-            //                      category, lexeme, row, column);
             return $"{{{category}, '{lexeme}', @({row}, {column})}}";
+        }
+
+        public string ToEscapedString()
+        {
+            var escapedLexeme = lexeme.Replace("\"", "\\\"");
+            return $"{{{category}, '{escapedLexeme}', @({row}, {column})}}";
         }
     }
 }
