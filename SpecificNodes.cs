@@ -7,15 +7,15 @@ Authors:
 	A01371719 Servio Tulio Reyes Castillo
 */
 
+using System.Collections.Generic;
 
 namespace Chimera
 {
-
     class AndNode : Node { }
     class OrNode : Node { }
     class XorNode : Node { }
     class EqualNode : Node { }
-    class UnEqualNode : Node { }
+    class UnequalNode : Node { }
     class LessThanNode : Node { }
     class MoreThanNode : Node { }
     class LessThanEqualNode : Node { }
@@ -33,8 +33,7 @@ namespace Chimera
     class TypeNode : Node { }
     class IntLiteralNode : Node { }
     class StringLiteralNode : Node { }
-    class TrueNode : Node { }
-    class FalseNode : Node { }
+    class BoolLiteralNode : Node { }
     class LiteralNode : Node { }
     class ConstantDeclarationNode : Node { }
     class IdentifierNode : Node { }

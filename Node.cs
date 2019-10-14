@@ -10,6 +10,7 @@ Authors:
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace Chimera
 {
@@ -17,7 +18,46 @@ namespace Chimera
     class Node : IEnumerable<Node>
     {
 
-        IList<Node> children = new List<Node>();
+        private static readonly Dictionary<TokenCategory, Type> nodeForToken =
+            new Dictionary<TokenCategory, Type>() {
+                { TokenCategory.PLUS, typeof(PlusNode) },
+                { TokenCategory.MINUS, typeof(MinusNode) },
+
+                { TokenCategory.AND, typeof(AndNode) },
+                { TokenCategory.OR, typeof(OrNode) },
+                { TokenCategory.XOR, typeof(XorNode) },
+
+                { TokenCategory.TIMES, typeof(TimesNode) },
+                { TokenCategory.DIV, typeof(DivNode) },
+                { TokenCategory.REM, typeof(RemNode) },
+
+                { TokenCategory.EQUAL, typeof(EqualNode) },
+                { TokenCategory.UNEQUAL, typeof(UnequalNode) },
+                { TokenCategory.LESS_THAN, typeof(LessThanEqualNode) },
+                { TokenCategory.MORE_THAN, typeof(MoreThanEqualNode) },
+                { TokenCategory.LESS_THAN_EQUAL, typeof(LessThanEqualNode) },
+                { TokenCategory.MORE_THAN_EQUAL, typeof(MoreThanEqualNode) },
+
+                { TokenCategory.INT_LITERAL, typeof(IntLiteralNode) },
+                { TokenCategory.STRING_LITERAL, typeof(StringLiteralNode) },
+                { TokenCategory.TRUE, typeof(BoolLiteralNode) },
+                { TokenCategory.FALSE, typeof(BoolLiteralNode) },
+
+                { TokenCategory.INTEGER, typeof(IntegerNode) },
+                { TokenCategory.STRING, typeof(StringNode) },
+                { TokenCategory.BOOLEAN, typeof(BooleanNode) },
+
+                { TokenCategory.IDENTIFIER, typeof(IdentifierNode) }
+            };
+
+        public static Node fromToken(Token token)
+        {
+            var node = (Node)Activator.CreateInstance(nodeForToken[token.Category]);
+            node.AnchorToken = token;
+            return node;
+        }
+
+        List<Node> children = new List<Node>();
 
         public Node this[int index]
         {
@@ -29,17 +69,26 @@ namespace Chimera
 
         public Token AnchorToken { get; set; }
 
+        private static int lastId = 0;
+        private int id { get; set; }
+
+        public Node()
+        {
+            id = lastId++;
+        }
+
         public void Add(Node node)
         {
+            if (node == null)
+            {
+                return;
+            }
             children.Add(node);
         }
 
-        public void AddMultiple(List<Node> nodes)
+        public void Add(List<Node> nodes)
         {
-            foreach (Node node in nodes)
-            {
-                children.Add(node);
-            }
+            children.AddRange(nodes.Where(n => n != null));
         }
 
         public IEnumerator<Node> GetEnumerator()
@@ -72,6 +121,25 @@ namespace Chimera
             foreach (var child in node.children)
             {
                 TreeTraversal(child, indent + "  ", sb);
+            }
+        }
+
+        public string ToGraphStringTree()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("digraph AST {");
+            GraphTreeTraversal(this, "", sb);
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
+
+        static void GraphTreeTraversal(Node node, string indent, StringBuilder sb)
+        {
+            sb.AppendLine($"\t{node.id} [label=\"{node.GetType().Name}\\n{node.AnchorToken}\"];");
+            foreach (var child in node.children)
+            {
+                sb.AppendLine($"\t{node.id}->{child.id};");
+                GraphTreeTraversal(child, indent + "  ", sb);
             }
         }
 

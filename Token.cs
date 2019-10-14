@@ -56,8 +56,9 @@ namespace Chimera
 
         public override string ToString()
         {
-            return string.Format("{{{0}, \"{1}\", @({2}, {3})}}",
-                                 category, lexeme, row, column);
+            // return string.Format("{{{0}, \"{1}\", @({2}, {3})}}",
+            //                      category, lexeme, row, column);
+            return $"{{{category}, '{lexeme}', @({row}, {column})}}";
         }
     }
 }

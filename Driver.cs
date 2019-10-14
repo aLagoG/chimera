@@ -23,7 +23,8 @@ namespace Chimera
         //-----------------------------------------------------------
         static readonly string[] ReleaseIncludes = {
             "Lexical analysis",
-            "Syntactic analysis"
+            "Syntactic analysis",
+            "AST construction"
         };
 
         //-----------------------------------------------------------
@@ -61,7 +62,7 @@ namespace Chimera
             if (args.Length == 0)
             {
                 Console.Error.WriteLine(
-                    "Please specify the name of the input file.");
+                    "Please specify the name of at least one input file.");
                 Environment.Exit(1);
             }
 
@@ -72,7 +73,11 @@ namespace Chimera
                     var input = File.ReadAllText(inputPath);
                     var parser = new Parser(new Scanner(input).Start().GetEnumerator());
                     var program = parser.Program();
+#if DEBUG
+                    Console.Write(program.ToGraphStringTree());
+#else
                     Console.Write(program.ToStringTree());
+#endif
                 }
                 catch (Exception e)
                 {
