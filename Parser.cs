@@ -248,19 +248,41 @@ namespace Chimera
             var program_node = new ProgramNode();
             program_node.Add(Optional(TokenCategory.CONST, () =>
             {
-                return OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration);
-            }, true));
+                var node = new ConstantListNode()
+                {
+                    AnchorToken = Expect(TokenCategory.CONST)
+                };
+                node.Add(OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration));
+                return node;
+            }));
 
             program_node.Add(Optional(TokenCategory.VAR, () =>
             {
-                return OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration);
-            }, true));
+                var node = new VariableDeclarationNode()
+                {
+                    AnchorToken = Expect(TokenCategory.VAR)
+                };
+                node.Add(OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration));
+                return node;
+            }));
 
-            program_node.Add(ZeroOrMore(TokenCategory.PROCEDURE, ProcedureDeclaration));
+            if (Has(TokenCategory.PROCEDURE))
+            {
+                program_node.Add(new ProcedureListNode()
+                {
+                    ZeroOrMore(TokenCategory.PROCEDURE, ProcedureDeclaration)
+                });
+            }
 
             program_node.AnchorToken = Expect(TokenCategory.PROGRAM);
 
-            program_node.Add(ZeroOrMore(firstOfStatement, Statement));
+            if (Has(firstOfStatement))
+            {
+                program_node.Add(new StatementListNode()
+                {
+                    ZeroOrMore(firstOfStatement, Statement)
+                });
+            }
 
             Expect(TokenCategory.END);
             Expect(TokenCategory.SEMICOLON);
@@ -281,17 +303,17 @@ namespace Chimera
 
         public Node VariableDeclaration()
         {
-            var variable_node = new VariableDeclarationNode();
-            variable_node.Add(Node.fromToken(Expect(TokenCategory.IDENTIFIER)));
-            var nodes = ZeroOrMore(TokenCategory.COMMA, () =>
+            var nodes = new List<Node>();
+            nodes.Add(Node.fromToken(Expect(TokenCategory.IDENTIFIER)));
+            nodes.AddRange(ZeroOrMore(TokenCategory.COMMA, () =>
                         {
                             return Node.fromToken(Expect(TokenCategory.IDENTIFIER));
-                        }, true);
-            variable_node.Add(nodes);
+                        }, true));
             Expect(TokenCategory.COLON);
-            variable_node.Add(Type());
+            var typeNode = Type();
             Expect(TokenCategory.SEMICOLON);
-            return variable_node;
+            typeNode.Add(nodes);
+            return typeNode;
         }
 
         public Node Literal()
@@ -340,9 +362,10 @@ namespace Chimera
         {
             Expect(TokenCategory.LIST);
             Expect(TokenCategory.OF);
-            var simple_type_node = new ListTypeNode();
-            simple_type_node.Add(SimpleType());
-            return simple_type_node;
+            return new ListTypeNode()
+            {
+                AnchorToken = SimpleType().AnchorToken
+            };
         }
 
         public Node List()
@@ -367,36 +390,46 @@ namespace Chimera
                 AnchorToken = Expect(TokenCategory.IDENTIFIER)
             };
             Expect(TokenCategory.PARENTHESIS_OPEN);
-            var parameters_node = new ParameterDeclarationNode();
-            parameters_node.Add(ZeroOrMore(TokenCategory.IDENTIFIER, ParameterDeclaration));
-            procedure_node.Add(parameters_node);
+
+            procedure_node.Add(new ParameterDeclarationNode()
+            {
+                ZeroOrMore(TokenCategory.IDENTIFIER, ParameterDeclaration)
+            });
 
             Expect(TokenCategory.PARENTHESIS_CLOSE);
 
-            var types_node = new TypeNode();
-            types_node.Add(Optional(TokenCategory.COLON, Type, true));
-            procedure_node.Add(types_node);
+            procedure_node.Add(Optional(TokenCategory.COLON, Type, true));
 
             Expect(TokenCategory.SEMICOLON);
-            var constants_node = new ConstantDeclarationNode();
-            constants_node.Add(Optional(TokenCategory.CONST, () =>
-                                        {
-                                            return OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration);
-                                        }, true));
-            procedure_node.Add(constants_node);
+            procedure_node.Add(Optional(TokenCategory.CONST, () =>
+            {
+                var node = new ConstantListNode()
+                {
+                    AnchorToken = Expect(TokenCategory.CONST)
+                };
+                node.Add(OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration));
+                return node;
+            }));
 
-            var variable_node = new VariableDeclarationNode();
-            variable_node.Add(Optional(TokenCategory.VAR, () =>
-                                        {
-                                            return OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration);
-                                        }, true));
-            variable_node.Add(variable_node);
+            procedure_node.Add(Optional(TokenCategory.VAR, () =>
+            {
+                var node = new VariableDeclarationNode()
+                {
+                    AnchorToken = Expect(TokenCategory.VAR)
+                };
+                node.Add(OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration));
+                return node;
+            }));
 
             Expect(TokenCategory.BEGIN);
 
-            var statements_node = new StatementNode();
-            statements_node.Add(ZeroOrMore(firstOfStatement, Statement));
-            procedure_node.Add(statements_node);
+            if (Has(firstOfStatement))
+            {
+                procedure_node.Add(new StatementListNode()
+                {
+                    ZeroOrMore(firstOfStatement, Statement)
+                });
+            }
 
             Expect(TokenCategory.END);
             Expect(TokenCategory.SEMICOLON);
@@ -406,17 +439,17 @@ namespace Chimera
 
         public Node ParameterDeclaration()
         {
-            var parameter_node = new ParameterDeclarationNode();
-            parameter_node.Add(Node.fromToken(Expect(TokenCategory.IDENTIFIER)));
-            parameter_node.Add(ZeroOrMore(TokenCategory.COMMA, () =>
-                                        {
-                                            return Node.fromToken(Expect(TokenCategory.IDENTIFIER));
-                                        }, true));
+            var nodes = new List<Node>();
+            nodes.Add(Node.fromToken(Expect(TokenCategory.IDENTIFIER)));
+            nodes.AddRange(ZeroOrMore(TokenCategory.COMMA, () =>
+                        {
+                            return Node.fromToken(Expect(TokenCategory.IDENTIFIER));
+                        }, true));
             Expect(TokenCategory.COLON);
-            parameter_node.Add(Type());
+            var typeNode = Type();
             Expect(TokenCategory.SEMICOLON);
-
-            return parameter_node;
+            typeNode.Add(nodes);
+            return typeNode;
         }
 
         public Node Statement()
@@ -457,8 +490,10 @@ namespace Chimera
             Node node = null;
             if (Has(TokenCategory.PARENTHESIS_OPEN))
             {
-                node = new CallNode();
-                node.Add(id_node);
+                node = new CallStatementNode()
+                {
+                    AnchorToken = id_node.AnchorToken
+                };
                 Expect(TokenCategory.PARENTHESIS_OPEN);
                 node.Add(Optional(firstOfExpression, () =>
                                                 {
@@ -471,14 +506,18 @@ namespace Chimera
             else if (Has(TokenCategory.BRACKET_OPEN) || Has(TokenCategory.COLON_EQUAL))
             {
                 node = new AssignmentNode();
-                node.Add(id_node);
-                node.Add(Optional(TokenCategory.BRACKET_OPEN, () =>
-                                                {
-                                                    var expression = Expression();
-                                                    Expect(TokenCategory.BRACKET_CLOSE);
-                                                    return expression;
-                                                }, true));
-                Expect(TokenCategory.COLON_EQUAL);
+                if (Has(TokenCategory.BRACKET_OPEN))
+                {
+                    Expect(TokenCategory.BRACKET_OPEN);
+                    var expression_node = Expression();
+                    Expect(TokenCategory.BRACKET_CLOSE);
+                    node.Add(new ListIndexNode() { id_node, expression_node });
+                }
+                else
+                {
+                    node.Add(id_node);
+                }
+                node.AnchorToken = Expect(TokenCategory.COLON_EQUAL);
                 node.Add(Expression());
             }
             else
@@ -694,9 +733,8 @@ namespace Chimera
             if (Has(TokenCategory.BRACKET_OPEN))
             {
                 Expect(TokenCategory.BRACKET_OPEN);
-                var indexNode = new ListIndexNode();
-                indexNode.Add(node);
-                indexNode.Add(Expression());
+                var indexNode = new ListIndexNode() { node, Expression() };
+                Expect(TokenCategory.BRACKET_CLOSE);
                 return indexNode;
             }
             return node;

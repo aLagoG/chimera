@@ -44,6 +44,7 @@ namespace Chimera
     class ListLiteralNode : Node { }
 
     class ConstantDeclarationNode : Node { }
+    class ConstantListNode : Node { }
     class IdentifierNode : Node { }
     class SumExpressionNode : Node { }
     class RelationalExpressionNode : Node { }
@@ -53,14 +54,17 @@ namespace Chimera
     class VariableDeclarationNode : Node { }
     class ForStatementNode : Node { }
     class StatementNode : Node { }
+    class StatementListNode : Node { }
     class IfStatementNode : Node { }
     class ElifStatementNode : Node { }
     class ElseStatementNode : Node { }
     class ProgramNode : Node { }
     class ProcedureDeclarationNode : Node { }
+    class ProcedureListNode : Node { }
     class ParameterDeclarationNode : Node { }
     class SimpleExpressionNode : Node { }
     class AssignmentNode : Node { }
+    class CallStatementNode : Node { }
     class CallNode : Node { }
     class ListIndexNode : Node { }
 }

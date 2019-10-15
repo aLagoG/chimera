@@ -136,7 +136,8 @@ namespace Chimera
 
         static void GraphTreeTraversal(Node node, string indent, StringBuilder sb)
         {
-            sb.AppendLine($"\t{node.id} [label=\"{node.GetType().Name}\\n{node.AnchorToken?.ToEscapedString()}\"];");
+            var nodeName = node.GetType().Name;
+            sb.AppendLine($"\t{node.id} [label=\"{nodeName.Remove(nodeName.Length - 4)}\\n{node.AnchorToken?.ToEscapedString()}\"];");
             foreach (var child in node.children)
             {
                 sb.AppendLine($"\t{node.id}->{child.id};");

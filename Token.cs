@@ -61,7 +61,7 @@ namespace Chimera
 
         public string ToEscapedString()
         {
-            var escapedLexeme = lexeme.Replace("\"", "\\\"");
+            var escapedLexeme = lexeme.Replace("\"", "");
             return $"{{{category}, '{escapedLexeme}', @({row}, {column})}}";
         }
     }
