@@ -1,7 +1,7 @@
 # chimera
 Final and only project for compiler design class
 
-- [ ] Program
+- [X] Program
 - [X] Constant declaration
 - [X] Variable declaration
 - [X] Literal
@@ -10,25 +10,25 @@ Final and only project for compiler design class
 - [X] Simple Type
 - [X] List Type
 - [X] List
-- [ ] Procedure declaration
+- [X] Procedure declaration
 - [X] Parameter declaration
-- [ ] Statement
-- [ ] Assignment statement
-- [ ] Call statement
-- [ ] If statement
-- [ ] Loop statement
-- [ ] For statement
-- [ ] Return statement
+- [X] Statement
+- [X] Assignment statement
+- [X] Call statement
+- [X] If statement
+- [X] Loop statement
+- [X] For statement
+- [X] Return statement
 - [X] Exit statement
-- [ ] Expression
-- [ ] Logic expression
+- [X] Expression
+- [X] Logic expression
 - [X] Logic operator
-- [ ] Relational expression
+- [X] Relational expression
 - [X] Relational operator
-- [ ] Sum expression
+- [X] Sum expression
 - [X] Sum operator
-- [ ] Mul expression
+- [X] Mul expression
 - [X] Mul operator
-- [ ] Unary expression
-- [ ] Simple expression
-- [ ] Call
+- [X] Unary expression
+- [X] Simple expression
+- [X] Call

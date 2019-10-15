@@ -54,4 +54,5 @@ namespace Chimera
     class CallStatementNode : Node { }
     class CallNode : Node { }
     class ListIndexNode : Node { }
+    class ElseIfListNode : Node { }
 }
