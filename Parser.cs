@@ -558,14 +558,16 @@ namespace Chimera
             };
             if_node.Add(Expression());
             Expect(TokenCategory.THEN);
-            var if_statement_node = new StatementNode();
-            if_statement_node.Add(ZeroOrMore(firstOfStatement, Statement));
-            if_node.Add(if_statement_node);
-
-            if_node.Add(ZeroOrMore(TokenCategory.ELSEIF, () =>
+            if_node.Add(new StatementListNode(){
+                ZeroOrMore(firstOfStatement, Statement)
+            });
+            if (Has(TokenCategory.ELSEIF))
+            {
+                if_node.Add(ZeroOrMore(TokenCategory.ELSEIF, () =>
                                 {
                                     return ElifStatement();
                                 }));
+            }
 
             if (Has(TokenCategory.ELSE))
             {
@@ -602,9 +604,9 @@ namespace Chimera
             Expect(TokenCategory.IN);
             for_node.Add(Expression());
             Expect(TokenCategory.DO);
-            var statement_node = new StatementNode();
-            statement_node.Add(ZeroOrMore(firstOfStatement, Statement));
-            for_node.Add(statement_node);
+            for_node.Add(new StatementListNode(){
+                ZeroOrMore(firstOfStatement, Statement)
+            });
             Expect(TokenCategory.END);
             Expect(TokenCategory.SEMICOLON);
             return for_node;

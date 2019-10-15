@@ -53,7 +53,6 @@ namespace Chimera
     class LoopStatementNode : Node { }
     class VariableDeclarationNode : Node { }
     class ForStatementNode : Node { }
-    class StatementNode : Node { }
     class StatementListNode : Node { }
     class IfStatementNode : Node { }
     class ElifStatementNode : Node { }
