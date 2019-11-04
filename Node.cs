@@ -1,6 +1,6 @@
 /*
 Chimera
-Date: 21-Oct-2019
+Date: 11-Nov-2019
 Authors:
 	A01371779 Andres De Lago Gomez
 	A01377503 Ian Neumann Sanchez
@@ -18,8 +18,8 @@ namespace Chimera
     class Node : IEnumerable<Node>
     {
 
-        private static readonly Dictionary<TokenCategory, Type> nodeForToken =
-            new Dictionary<TokenCategory, Type>() {
+        private static readonly Dictionary<TokenCategory, System.Type> nodeForToken =
+            new Dictionary<TokenCategory, System.Type>() {
                 { TokenCategory.PLUS, typeof(PlusNode) },
                 { TokenCategory.MINUS, typeof(MinusNode) },
 

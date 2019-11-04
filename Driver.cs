@@ -1,6 +1,6 @@
 /*
 Chimera
-Date: 21-Oct-2019
+Date: 11-Nov-2019
 Authors:
 	A01371779 Andres De Lago Gomez
 	A01377503 Ian Neumann Sanchez
@@ -14,24 +14,22 @@ using System.Collections.Generic;
 
 namespace Chimera
 {
+    public class Driver {
 
-    public class Driver
-    {
-
-        const string VERSION = "0.3";
+        const string VERSION = "0.4";
 
         //-----------------------------------------------------------
         static readonly string[] ReleaseIncludes = {
             "Lexical analysis",
             "Syntactic analysis",
-            "AST construction"
+            "AST construction",
+            "Semantic analysis"
         };
 
         //-----------------------------------------------------------
-        void PrintAppHeader()
-        {
-            Console.WriteLine("Chimera compiler, version " + VERSION);
-            Console.WriteLine("Copyright \u00A9 2013 by Andres, Ian, Servio, ITESM CEM."
+        void PrintAppHeader() {
+            Console.WriteLine("Buttercup compiler, version " + VERSION);
+            Console.WriteLine("Copyright \u00A9 2013 by A. Ortiz, ITESM CEM."                
             );
             Console.WriteLine("This program is free software; you may "
                 + "redistribute it under the terms of");
@@ -41,61 +39,60 @@ namespace Chimera
         }
 
         //-----------------------------------------------------------
-        void PrintReleaseIncludes()
-        {
-            Console.WriteLine("Included in this release:");
-            foreach (var phase in ReleaseIncludes)
-            {
+        void PrintReleaseIncludes() {
+            Console.WriteLine("Included in this release:");            
+            foreach (var phase in ReleaseIncludes) {
                 Console.WriteLine("   * " + phase);
             }
         }
 
         //-----------------------------------------------------------
-        void Run(string[] args)
-        {
+        void Run(string[] args) {
 
             PrintAppHeader();
             Console.WriteLine();
             PrintReleaseIncludes();
             Console.WriteLine();
 
-            if (args.Length == 0)
-            {
+            if (args.Length != 1) {
                 Console.Error.WriteLine(
-                    "Please specify the name of at least one input file.");
+                    "Please specify the name of the input file.");
                 Environment.Exit(1);
             }
 
-            foreach (string inputPath in args)
-            {
-                try
-                {
-                    var input = File.ReadAllText(inputPath);
-                    var parser = new Parser(new Scanner(input).Start().GetEnumerator());
-                    var program = parser.Program();
-#if DEBUG
-                    Console.Write(program.ToGraphStringTree());
-#else
-                    Console.Write(program.ToStringTree());
-#endif
-                }
-                catch (Exception e)
-                {
-                    Console.Error.WriteLine($"Exception on file: '{inputPath}'");
-                    if (e is FileNotFoundException || e is SyntaxError)
-                    {
-                        Console.Error.WriteLine(e.Message);
-                        Environment.Exit(1);
-                    }
+            try {            
+                var inputPath = args[0];                
+                var input = File.ReadAllText(inputPath);
+                var parser = new Parser(new Scanner(input).Start().GetEnumerator());
+                var program = parser.Program();
+                Console.WriteLine("Syntax OK.");
 
-                    throw;
+                var semantic = new SemanticAnalyzer();
+                semantic.Visit((dynamic) program);
+
+                Console.WriteLine("Semantics OK.");
+                Console.WriteLine();
+                Console.WriteLine("Symbol Table");
+                Console.WriteLine("============");
+                foreach (var entry in semantic.Table) {
+                    Console.WriteLine(entry);                        
                 }
+
+            } catch (Exception e) {
+
+                if (e is FileNotFoundException 
+                    || e is SyntaxError 
+                    || e is SemanticError) {
+                    Console.Error.WriteLine(e.Message);
+                    Environment.Exit(1);
+                }
+
+                throw;
             }
         }
 
         //-----------------------------------------------------------
-        public static void Main(string[] args)
-        {
+        public static void Main(string[] args) {
             new Driver().Run(args);
         }
     }
