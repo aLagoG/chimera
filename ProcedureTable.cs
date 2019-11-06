@@ -8,44 +8,53 @@ Authors:
 */
 
 using System;
+using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 
 namespace Chimera
 {
 
-    public class SymbolTable : IEnumerable<KeyValuePair<string, SymbolTable.Row>>
+    public class ProcedureTable : IEnumerable<KeyValuePair<string, ProcedureTable.Row>>
     {
 
         public class Row
         {
-            public Row(Type type, Kind kind, int pos = -1)
+            public Row(Type type, bool isPredefined)
             {
                 this.type = type;
-                this.kind = kind;
-                this.pos = pos;
+                this.isPredefined = isPredefined;
+                symbols = new SymbolTable();
             }
             public Type type { get; private set; }
-            public Kind kind { get; private set; }
-            public int pos { get; private set; }
+            public bool isPredefined { get; private set; }
+            public SymbolTable symbols { get; private set; }
 
             public override string ToString()
             {
-                var posString = pos == -1 ? "-" : $"{pos}";
-                return $"{type}, {kind}, {posString}";
+                var symbolsSting = "";
+                if (symbols.Count() > 0)
+                {
+                    symbolsSting = "\t" + symbols.ToString().Replace("\n", "\n\t");
+                }
+                return $"{isPredefined}, {type} \n{symbolsSting}";
             }
         }
 
-        IDictionary<string, SymbolTable.Row> data = new SortedDictionary<string, SymbolTable.Row>();
+        IDictionary<string, ProcedureTable.Row> data = new SortedDictionary<string, ProcedureTable.Row>();
 
         //-----------------------------------------------------------
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("Symbol Table\n");
+            sb.Append("Procedure Table\n");
             sb.Append("====================\n");
             foreach (var entry in data)
             {
+                if (entry.Value.isPredefined)
+                {
+                    continue;
+                }
                 sb.Append(String.Format("{0}: {1}\n",
                                         entry.Key,
                                         entry.Value));
@@ -55,7 +64,7 @@ namespace Chimera
         }
 
         //-----------------------------------------------------------
-        public SymbolTable.Row this[string key]
+        public ProcedureTable.Row this[string key]
         {
             get
             {
@@ -74,7 +83,7 @@ namespace Chimera
         }
 
         //-----------------------------------------------------------
-        public IEnumerator<KeyValuePair<string, SymbolTable.Row>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, ProcedureTable.Row>> GetEnumerator()
         {
             return data.GetEnumerator();
         }

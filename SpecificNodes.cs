@@ -30,6 +30,7 @@ namespace Chimera
     class IntegerNode : Node { }
     class StringNode : Node { }
     class BooleanNode : Node { }
+    class VoidTypeNode : Node { }
     class ListTypeNode : Node { }
     class IntLiteralNode : Node { }
     class StringLiteralNode : Node { }

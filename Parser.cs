@@ -398,7 +398,12 @@ namespace Chimera
 
             Expect(TokenCategory.PARENTHESIS_CLOSE);
 
-            procedure_node.Add(Optional(TokenCategory.COLON, Type, true));
+            var typeNode = Optional(TokenCategory.COLON, Type, true);
+            if (typeNode == null)
+            {
+                typeNode = new VoidTypeNode();
+            }
+            procedure_node.Add(typeNode);
 
             Expect(TokenCategory.SEMICOLON);
             procedure_node.Add(Optional(TokenCategory.CONST, () =>
@@ -423,13 +428,10 @@ namespace Chimera
 
             Expect(TokenCategory.BEGIN);
 
-            if (Has(firstOfStatement))
+            procedure_node.Add(new StatementListNode()
             {
-                procedure_node.Add(new StatementListNode()
-                {
-                    ZeroOrMore(firstOfStatement, Statement)
-                });
-            }
+                ZeroOrMore(firstOfStatement, Statement)
+            });
 
             Expect(TokenCategory.END);
             Expect(TokenCategory.SEMICOLON);
@@ -716,8 +718,10 @@ namespace Chimera
                 // May be a call
                 if (Has(TokenCategory.PARENTHESIS_OPEN))
                 {
-                    var call_node = new CallNode();
-                    call_node.Add(node);
+                    var call_node = new CallNode()
+                    {
+                        AnchorToken = node.AnchorToken
+                    };
                     Expect(TokenCategory.PARENTHESIS_OPEN);
                     if (Has(firstOfExpression))
                     {

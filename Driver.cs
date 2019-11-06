@@ -14,7 +14,9 @@ using System.Collections.Generic;
 
 namespace Chimera
 {
-    public class Driver {
+
+    public class Driver
+    {
 
         const string VERSION = "0.4";
 
@@ -27,9 +29,10 @@ namespace Chimera
         };
 
         //-----------------------------------------------------------
-        void PrintAppHeader() {
-            Console.WriteLine("Buttercup compiler, version " + VERSION);
-            Console.WriteLine("Copyright \u00A9 2013 by A. Ortiz, ITESM CEM."                
+        void PrintAppHeader()
+        {
+            Console.WriteLine("Chimera compiler, version " + VERSION);
+            Console.WriteLine("Copyright \u00A9 2013 by Andres, Ian, Servio, ITESM CEM."
             );
             Console.WriteLine("This program is free software; you may "
                 + "redistribute it under the terms of");
@@ -39,60 +42,75 @@ namespace Chimera
         }
 
         //-----------------------------------------------------------
-        void PrintReleaseIncludes() {
-            Console.WriteLine("Included in this release:");            
-            foreach (var phase in ReleaseIncludes) {
+        void PrintReleaseIncludes()
+        {
+            Console.WriteLine("Included in this release:");
+            foreach (var phase in ReleaseIncludes)
+            {
                 Console.WriteLine("   * " + phase);
             }
         }
 
         //-----------------------------------------------------------
-        void Run(string[] args) {
+        void Run(string[] args)
+        {
 
             PrintAppHeader();
             Console.WriteLine();
             PrintReleaseIncludes();
             Console.WriteLine();
 
-            if (args.Length != 1) {
+            if (args.Length == 0)
+            {
                 Console.Error.WriteLine(
-                    "Please specify the name of the input file.");
+                    "Please specify the name of at least one input file.");
                 Environment.Exit(1);
             }
 
-            try {            
-                var inputPath = args[0];                
-                var input = File.ReadAllText(inputPath);
-                var parser = new Parser(new Scanner(input).Start().GetEnumerator());
-                var program = parser.Program();
-                Console.WriteLine("Syntax OK.");
+            foreach (string inputPath in args)
+            {
+                try
+                {
+                    var input = File.ReadAllText(inputPath);
+                    var parser = new Parser(new Scanner(input).Start().GetEnumerator());
 
-                var semantic = new SemanticAnalyzer();
-                semantic.Visit((dynamic) program);
+                    var program = parser.Program();
+                    Console.WriteLine("Syntax OK.");
+#if DEBUG
+                    Console.WriteLine();
+                    Console.WriteLine(program.ToGraphStringTree());
+#endif
 
-                Console.WriteLine("Semantics OK.");
-                Console.WriteLine();
-                Console.WriteLine("Symbol Table");
-                Console.WriteLine("============");
-                foreach (var entry in semantic.Table) {
-                    Console.WriteLine(entry);                        
+                    var semantic = new SemanticAnalyzer();
+                    semantic.Visit((dynamic)program);
+                    Console.WriteLine("Semantics OK.");
+#if DEBUG
+                    Console.WriteLine();
+                    Console.WriteLine(semantic.symbolTable);
+                    Console.WriteLine();
+                    Console.WriteLine(semantic.procedureTable);
+#endif
+                    Console.WriteLine();
                 }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Exception on file: '{inputPath}'");
+                    if (e is FileNotFoundException
+                        || e is SyntaxError
+                        || e is SemanticError)
+                    {
+                        Console.Error.WriteLine(e.Message);
+                        Environment.Exit(1);
+                    }
 
-            } catch (Exception e) {
-
-                if (e is FileNotFoundException 
-                    || e is SyntaxError 
-                    || e is SemanticError) {
-                    Console.Error.WriteLine(e.Message);
-                    Environment.Exit(1);
+                    throw;
                 }
-
-                throw;
             }
         }
 
         //-----------------------------------------------------------
-        public static void Main(string[] args) {
+        public static void Main(string[] args)
+        {
             new Driver().Run(args);
         }
     }
