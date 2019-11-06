@@ -100,6 +100,10 @@ namespace Chimera
                         || e is SemanticError)
                     {
                         Console.Error.WriteLine(e.Message);
+#if DEBUG
+                        Console.WriteLine("-----------");
+                        Console.WriteLine(e.StackTrace);
+#endif
                         Environment.Exit(1);
                     }
 

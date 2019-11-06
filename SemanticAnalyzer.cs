@@ -36,6 +36,8 @@ namespace Chimera
 
         private string currentScope = "";
 
+        private bool inLoopOrFor = false;
+
         public SemanticAnalyzer()
         {
             symbolTable = new SymbolTable();
@@ -102,10 +104,6 @@ namespace Chimera
         public Type Visit(StatementListNode node)
         {
             VisitChildren(node);
-            return Type.VOID;
-        }
-        public Type Visit(ExitNode node)
-        {
             return Type.VOID;
         }
 
@@ -279,6 +277,11 @@ namespace Chimera
                                         node.AnchorToken);
             }
             Type type = Visit((dynamic)node[0]);
+            if (type == Type.LIST)
+            {
+                throw new SemanticError($"List constants should have at least one element",
+                            node.AnchorToken);
+            }
             AddSymbolToScope(varName, type, Kind.CONST);
             return type;
         }
@@ -309,7 +312,7 @@ namespace Chimera
             Type type2 = Visit((dynamic)node[1]);
             if (!type1.CompatibleWith(type2))
             {
-                throw new SemanticError($"Cannot assign an {type1} to a {type2} variable",
+                throw new SemanticError($"Cannot assign a value of type {type2} to a variable of type {type1}",
                     node.AnchorToken);
             }
             return Type.VOID;
@@ -328,18 +331,14 @@ namespace Chimera
                 node.AnchorToken);
         }
 
-        public Type Visit(ReturnStatementNode node)
-        {
-            if (node.Count() == 0)
-            {
-                return Type.VOID;
-            }
-            return Visit((dynamic)node[0]);
-        }
-
         public Type Visit(LoopStatementNode node)
         {
+            var lastInLoopOrFor = inLoopOrFor;
+            inLoopOrFor = true;
+
             VisitChildren(node);
+
+            inLoopOrFor = lastInLoopOrFor;
             return Type.VOID;
         }
         public Type Visit(ForStatementNode node)
@@ -351,18 +350,26 @@ namespace Chimera
                 throw new SemanticError($"Incompatible types {varType} and {listType}",
                     node[0].AnchorToken);
             }
+            var lastInLoopOrFor = inLoopOrFor;
+            inLoopOrFor = true;
+
             Visit((dynamic)node[2]);
+
+            inLoopOrFor = lastInLoopOrFor;
+            return Type.VOID;
+        }
+        public Type Visit(ExitNode node)
+        {
+            if (!inLoopOrFor)
+            {
+                throw new SemanticError("Unexpected exit statement", node.AnchorToken);
+            }
             return Type.VOID;
         }
 
         public Type Visit(IfStatementNode node)
         {
-            Type conditionType = Visit((dynamic)node[0]);
-            if (conditionType != Type.BOOL)
-            {
-                throw new SemanticError($"Condition has to be of type {Type.BOOL} but got {conditionType}",
-                    node.AnchorToken);
-            }
+            VerifyCondition(node);
             VisitChildren(node, 1);
             return Type.VOID;
         }
@@ -373,12 +380,7 @@ namespace Chimera
         }
         public Type Visit(ElifStatementNode node)
         {
-            Type conditionType = Visit((dynamic)node[0]);
-            if (conditionType != Type.BOOL)
-            {
-                throw new SemanticError($"Condition has to be of type {Type.BOOL} but got {conditionType}",
-                    node.AnchorToken);
-            }
+            VerifyCondition(node);
             Visit((dynamic)node[1]);
             return Type.VOID;
         }
@@ -387,7 +389,21 @@ namespace Chimera
             VisitChildren(node);
             return Type.VOID;
         }
+        private void VerifyCondition(Node node)
+        {
+            Type conditionType = Visit((dynamic)node[0]);
+            if (conditionType != Type.BOOL)
+            {
+                throw new SemanticError($"Condition has to be of type {Type.BOOL} but got {conditionType}",
+                    node.AnchorToken);
+            }
+        }
 
+        public Type Visit(ProcedureListNode node)
+        {
+            VisitChildren(node);
+            return Type.VOID;
+        }
         public Type Visit(ProcedureDeclarationNode node)
         {
             var procedureName = node.AnchorToken.Lexeme;
@@ -404,11 +420,6 @@ namespace Chimera
 
             currentScope = "";
             return procedureType;
-        }
-        public Type Visit(ProcedureListNode node)
-        {
-            VisitChildren(node);
-            return Type.VOID;
         }
         public Type Visit(ParameterDeclarationNode node)
         {
@@ -432,38 +443,33 @@ namespace Chimera
             }
             return Type.VOID;
         }
+        public Type Visit(ReturnStatementNode node)
+        {
+            if (currentScope == "")
+            {
+                throw new SemanticError("Unexpected return statement",
+                    node.AnchorToken);
+            }
+            Type type = node.Count() == 0 ? Type.VOID : Visit((dynamic)node[0]);
+            var procedureType = procedureTable[currentScope].type;
+            if (!procedureType.CompatibleWith(type))
+            {
+                throw new SemanticError($"Invalid return type {type} for procedure of type {procedureType}",
+                    node.AnchorToken);
+            }
+            return type;
+        }
 
         public Type Visit(CallStatementNode node)
         {
-            var name = node.AnchorToken.Lexeme;
-            if (procedureTable.Contains(name))
-            {
-                var procedure = procedureTable[name];
-                var _params = procedure.symbols.Where(kv => kv.Value.kind == Kind.PARAM)
-                                            .OrderBy(kv => kv.Value.pos)
-                                            .ToList();
-                if (node.Count() != _params.Count())
-                {
-                    throw new SemanticError($"Wrong number of params to procedure call: "
-                        + $"expected {_params.Count()} but got {node.Count()}", node.AnchorToken);
-                }
-                for (int i = 0; i < _params.Count; ++i)
-                {
-                    var _node = node[i];
-                    var _param = _params[i];
-                    Type nodeType = Visit((dynamic)_node);
-                    if (!nodeType.CompatibleWith(_param.Value.type))
-                    {
-                        throw new SemanticError($"Incompatible types {nodeType} and {_param.Value.type} for parameter {_param.Key}",
-                            _node.AnchorToken);
-                    }
-                }
-                return Type.VOID;
-            }
-
-            throw new SemanticError($"Undeclared procedure: {name}", node.AnchorToken);
+            VerifyCall(node);
+            return Type.VOID;
         }
         public Type Visit(CallNode node)
+        {
+            return VerifyCall(node);
+        }
+        private Type VerifyCall(Node node)
         {
             var name = node.AnchorToken.Lexeme;
             if (procedureTable.Contains(name))
