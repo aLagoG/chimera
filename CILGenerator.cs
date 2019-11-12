@@ -39,6 +39,7 @@ namespace Chimera
 
         public String Visit(ProgramNode node)
         {
+            return "";
             VisitChildren(node);
             // return Type.VOID;
             return "";
