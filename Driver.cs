@@ -18,14 +18,15 @@ namespace Chimera
     public class Driver
     {
 
-        const string VERSION = "0.4";
+        const string VERSION = "0.5";
 
         //-----------------------------------------------------------
         static readonly string[] ReleaseIncludes = {
             "Lexical analysis",
             "Syntactic analysis",
             "AST construction",
-            "Semantic analysis"
+            "Semantic analysis",
+            "CIL code generation"
         };
 
         //-----------------------------------------------------------
@@ -74,15 +75,15 @@ namespace Chimera
                     var input = File.ReadAllText(inputPath);
                     var parser = new Parser(new Scanner(input).Start().GetEnumerator());
 
-                    var program = parser.Program();
+                    var ast = parser.Program();
                     Console.WriteLine("Syntax OK.");
 #if DEBUG
                     Console.WriteLine();
-                    Console.WriteLine(program.ToGraphStringTree());
+                    Console.WriteLine(ast.ToGraphStringTree());
 #endif
 
                     var semantic = new SemanticAnalyzer();
-                    semantic.Visit((dynamic)program);
+                    semantic.Visit((dynamic)ast);
                     Console.WriteLine("Semantics OK.");
 #if DEBUG
                     Console.WriteLine();
@@ -90,7 +91,14 @@ namespace Chimera
                     Console.WriteLine();
                     Console.WriteLine(semantic.procedureTable);
 #endif
-                    Console.WriteLine();
+                    var codeGenerator = new CILGenerator(semantic.symbolTable, semantic.procedureTable);
+
+                    var outputPath = inputPath.Replace(".chimera", ".il");
+                    File.WriteAllText(
+                        outputPath,
+                        codeGenerator.Visit((dynamic)ast));
+                    Console.WriteLine(
+                        $"Generated CIL code to '{outputPath}'.");
                 }
                 catch (Exception e)
                 {
