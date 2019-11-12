@@ -312,11 +312,11 @@ namespace Chimera
         }
         public Type Visit(AssignmentNode node)
         {
+            Type type1 = Visit((dynamic)node[0]);
             if (node[0] is IdentifierNode && GetSymbol(node[0].AnchorToken.Lexeme).kind == Kind.CONST)
             {
                 throw new SemanticError($"Cannot assign to constant '{node[0].AnchorToken.Lexeme}'", node[0].AnchorToken);
             }
-            Type type1 = Visit((dynamic)node[0]);
             Type type2 = Visit((dynamic)node[1]);
             if (!type1.CompatibleWith(type2))
             {
