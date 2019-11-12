@@ -259,7 +259,11 @@ namespace Chimera
         public Type Visit(ListIndexNode node)
         {
             Type type = Visit((dynamic)node[0]);
-            Visit((dynamic)node[1]);
+            Type indexType = Visit((dynamic)node[1]);
+            if (indexType != Type.INT)
+            {
+                throw new SemanticError($"List indexes should be {Type.INT}, got {indexType}", node[1].AnchorToken);
+            }
             return type.FromListType();
         }
 
