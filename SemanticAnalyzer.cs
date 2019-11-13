@@ -350,6 +350,7 @@ namespace Chimera
                 throw new SemanticError($"Incompatible types {varType} and {listType}",
                     node[0].AnchorToken);
             }
+            AddSymbolToScope($"__{node[0].AnchorToken.Lexeme}_index", Type.INT, Kind.VAR);
             var lastInLoopOrFor = inLoopOrFor;
             inLoopOrFor = true;
 
