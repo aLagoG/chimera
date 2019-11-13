@@ -67,5 +67,25 @@ namespace Chimera
             }
             return t == other;
         }
+
+        public static string ToCilType(this Type type)
+        {
+            switch (type)
+            {
+                case Type.BOOL:
+                case Type.INT:
+                    return "int32";
+                case Type.STRING:
+                    return "string";
+                case Type.BOOL_LIST:
+                case Type.INT_LIST:
+                    return "int32[]";
+                case Type.STRING_LIST:
+                    return "string[]";
+                case Type.VOID:
+                    return "void";
+            }
+            throw new Exception($"Could not find CIL type for: {type}");
+        }
     }
 }

@@ -92,11 +92,12 @@ namespace Chimera
                     Console.WriteLine(semantic.procedureTable);
 #endif
                     var codeGenerator = new CILGenerator(semantic.symbolTable, semantic.procedureTable);
-
+                    codeGenerator.Visit((dynamic)ast);
+                    var code = codeGenerator.ToString();
                     var outputPath = inputPath.Replace(".chimera", ".il");
                     File.WriteAllText(
                         outputPath,
-                        codeGenerator.Visit((dynamic)ast));
+                        code);
                     Console.WriteLine(
                         $"Generated CIL code to '{outputPath}'.");
                 }
