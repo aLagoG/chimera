@@ -227,3 +227,5 @@ project.lock.json
 *.exe
 *.exe.mdb
 ignore/
+*.il
+*.txt
