@@ -267,8 +267,6 @@ namespace Chimera
             else
             {
                 string varName = node[0].AnchorToken.Lexeme;
-                string varType = GetSymbol(varName).type.ToCilType();
-
                 StoreInVariable(varName);
             }
         }
@@ -304,8 +302,9 @@ namespace Chimera
             builder.AppendLine("\t\tldc.i4.0");
             StoreInVariable(indexVarName);
 
-            builder.AppendLine($"\t\tfor_{currentId}:");
             Visit((dynamic)node[1]);
+            builder.AppendLine($"\tfor_{currentId}:");
+            builder.AppendLine($"\t\tdup");
             LoadVariable(indexVarName);
             switch (GetSymbol(varName).type)
             {
@@ -328,14 +327,15 @@ namespace Chimera
             builder.AppendLine("\t\tadd");
             StoreInVariable(indexVarName);
 
-            builder.AppendLine($"\t\tnext_{currentId}:");
-            LoadVariable(indexVarName);
-            Visit((dynamic)node[1]);
+            builder.AppendLine($"\tnext_{currentId}:");
+            builder.AppendLine($"\t\tdup");
             builder.AppendLine($"\t\tldlen");
             builder.AppendLine($"\t\tconv.i4");
-            builder.AppendLine($"\t\tblt for_{currentId}");
+            LoadVariable(indexVarName);
+            builder.AppendLine($"\t\tbgt for_{currentId}");
 
-            builder.AppendLine($"\t\tend_{currentId}:");
+            builder.AppendLine($"\tend_{currentId}:");
+            builder.AppendLine($"\t\tpop");
             inLoopOrFor = lastInLoopOrFor;
         }
         public void Visit(ExitNode node)
