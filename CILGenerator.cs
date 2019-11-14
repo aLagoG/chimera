@@ -59,23 +59,25 @@ namespace Chimera
             builder.AppendLine(".assembly extern 'ChimeraLib' {}");
             builder.AppendLine(".class public 'ChimeraProgram' extends ['mscorlib']'System'.'Object' {");
             builder.AppendLine(DeclareVariablesOnScope(currentScope));
-            VisitChildren(node);
+            if (node.Last() is StatementListNode)
+            {
+                VisitChildren(node, take: 1);
+                builder.AppendLine("\t.method public static void main(){");
+                builder.AppendLine("\t\t.entrypoint");
+                builder.AppendLine(InitializeVariablesOnScope(currentScope));
+                Visit((dynamic)node.Last());
+                builder.AppendLine("\t\tret");
+                builder.AppendLine("\t}");
+            }
+            else
+            {
+                VisitChildren(node);
+            }
             builder.AppendLine("}");
         }
         public void Visit(StatementListNode node)
         {
-            if (currentScope == "")
-            {
-                builder.AppendLine("\t.method public static void main(){");
-                builder.AppendLine("\t\t.entrypoint");
-            }
-            builder.AppendLine(InitializeVariablesOnScope(currentScope));
             VisitChildren(node);
-            if (currentScope == "")
-            {
-                builder.AppendLine("\t\tret");
-                builder.AppendLine("\t}");
-            }
         }
 
         public void Visit(AndNode node)
@@ -198,14 +200,32 @@ namespace Chimera
         public void Visit(ListLiteralNode node)
         {
             builder.AppendLine($"\t\tldc.i4 {node.Count()}");
-            builder.AppendLine($"newarr");
+            string listType = "";
+            string elementType = "";
+            if (node[0] is IntLiteralNode)
+            {
+                listType = "int32";
+                elementType = "i4";
+            }
+            else if (node[0] is BoolLiteralNode)
+            {
+                listType = "bool";
+                elementType = "i4";
+            }
+            else if (node[0] is StringLiteralNode)
+            {
+                listType = "string";
+                elementType = "ref";
+            }
+            builder.AppendLine($"\t\tnewarr {listType}");
             int index = 0;
             foreach (var n in node)
             {
                 builder.AppendLine("\t\tdup");
                 builder.AppendLine($"\t\tldc.i4 {index}");
                 Visit((dynamic)n);
-                builder.AppendLine("\t\tstelem.ref");
+
+                builder.AppendLine($"\t\tstelem.{elementType}");
                 index++;
             }
         }
@@ -249,14 +269,7 @@ namespace Chimera
                 string varName = node[0].AnchorToken.Lexeme;
                 string varType = GetSymbol(varName).type.ToCilType();
 
-                if (currentScope != "" && procedureTable[currentScope].symbols.Contains(varName))
-                {
-                    builder.AppendLine($"\t\tstloc {varName}");
-                }
-                else
-                {
-                    builder.AppendLine($"\t\tstsfld {varType} class ['Chimera']'ChimeraProgram'::'{varName}'");
-                }
+                StoreInVariable(varName);
             }
         }
         public void Visit(IdentifierNode node)
@@ -265,19 +278,7 @@ namespace Chimera
 
             if (!inAssignment)
             {
-                var symbol = GetSymbol(varName);
-                if (symbol.kind == Kind.PARAM)
-                {
-                    builder.AppendLine($"\t\tldarg {varName}");
-                }
-                else if (currentScope != "" && procedureTable[currentScope].symbols.Contains(varName))
-                {
-                    builder.AppendLine($"\t\tldloc {varName}");
-                }
-                else
-                {
-                    builder.AppendLine($"\t\tldsfld {symbol.type.ToCilType()} class ['Chimera']'ChimeraProgram'::'{varName}'");
-                }
+                LoadVariable(varName);
             }
         }
 
@@ -297,42 +298,44 @@ namespace Chimera
         public void Visit(ForStatementNode node)
         {
             string varName = node[0].AnchorToken.Lexeme;
+            string indexVarName = $"__{varName}_index";
             var lastInLoopOrFor = inLoopOrFor;
             inLoopOrFor = true;
-            builder.AppendLine("ldc.i4.0");
-            builder.AppendLine($"stloc '__{varName}_index'");
+            builder.AppendLine("\t\tldc.i4.0");
+            StoreInVariable(indexVarName);
 
-            builder.AppendLine($"for_{currentId}:");
+            builder.AppendLine($"\t\tfor_{currentId}:");
             Visit((dynamic)node[1]);
-            builder.AppendLine($"ldloc '__{varName}_index'");
+            LoadVariable(indexVarName);
             switch (GetSymbol(varName).type)
             {
                 case Type.BOOL:
                 case Type.INT:
-                    builder.AppendLine($"ldelem.i4");
+                    builder.AppendLine($"\t\tldelem.i4");
                     break;
                 default:
-                    builder.AppendLine($"ldelem.ref");
+                    builder.AppendLine($"\t\tldelem.ref");
                     break;
 
             }
-            builder.AppendLine($"stloc {varName}");
+            StoreInVariable(varName);
 
+            builder.AppendLine($"// visiting {node[1].GetType().Name}");
             Visit((dynamic)node[2]);
 
-            builder.AppendLine($"ldloc '__{varName}_index'");
-            builder.AppendLine("ldc.i4.1");
-            builder.AppendLine("add");
-            builder.AppendLine($"stloc '__{varName}_index'");
+            LoadVariable(indexVarName);
+            builder.AppendLine("\t\tldc.i4.1");
+            builder.AppendLine("\t\tadd");
+            StoreInVariable(indexVarName);
 
-            builder.AppendLine($"next_{currentId}:");
-            builder.AppendLine($"ldloc '__{varName}_index'");
+            builder.AppendLine($"\t\tnext_{currentId}:");
+            LoadVariable(indexVarName);
             Visit((dynamic)node[1]);
-            builder.AppendLine($"ldlen");
-            builder.AppendLine($"conv.i4");
-            builder.AppendLine($"blt for_{currentId}");
+            builder.AppendLine($"\t\tldlen");
+            builder.AppendLine($"\t\tconv.i4");
+            builder.AppendLine($"\t\tblt for_{currentId}");
 
-            builder.AppendLine($"end_{currentId}:");
+            builder.AppendLine($"\t\tend_{currentId}:");
             inLoopOrFor = lastInLoopOrFor;
         }
         public void Visit(ExitNode node)
@@ -396,6 +399,7 @@ namespace Chimera
 
             builder.AppendLine("){");
             builder.AppendLine(DeclareVariablesOnScope(procedureName));
+            builder.AppendLine(InitializeVariablesOnScope(currentScope));
 
             if (node.Last() is StatementListNode)
             {
@@ -714,6 +718,36 @@ namespace Chimera
         private string DeclareLocalVar(VariableType variable)
         {
             return $"{variable.Value.type.ToCilType()} {variable.Key}";
+        }
+
+        private void LoadVariable(string varName)
+        {
+            var symbol = GetSymbol(varName);
+            if (symbol.kind == Kind.PARAM)
+            {
+                builder.AppendLine($"\t\tldarg {varName}");
+            }
+            else if (currentScope != "" && procedureTable[currentScope].symbols.Contains(varName))
+            {
+                builder.AppendLine($"\t\tldloc {varName}");
+            }
+            else
+            {
+                builder.AppendLine($"\t\tldsfld {symbol.type.ToCilType()} class ['Chimera']'ChimeraProgram'::'{varName}'");
+            }
+        }
+
+        private void StoreInVariable(string varName)
+        {
+            string varType = GetSymbol(varName).type.ToCilType();
+            if (currentScope != "" && procedureTable[currentScope].symbols.Contains(varName))
+            {
+                builder.AppendLine($"\t\tstloc {varName}");
+            }
+            else
+            {
+                builder.AppendLine($"\t\tstsfld {varType} class ['Chimera']'ChimeraProgram'::'{varName}'");
+            }
         }
 
         SymbolTable.Row GetSymbol(string key)
