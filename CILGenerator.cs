@@ -31,7 +31,6 @@ namespace Chimera
 
         private string currentScope = "";
 
-        private bool inLoopOrFor = false;
         private bool inAssignment = false;
         private int id = 0;
         private int currentId = 0;
@@ -58,21 +57,16 @@ namespace Chimera
             builder.AppendLine(".assembly 'Chimera' {}");
             builder.AppendLine(".assembly extern 'ChimeraLib' {}");
             builder.AppendLine(".class public 'ChimeraProgram' extends ['mscorlib']'System'.'Object' {");
-            builder.AppendLine(DeclareVariablesOnScope(currentScope));
-            if (node.Last() is StatementListNode)
-            {
-                VisitChildren(node, take: 1);
-                builder.AppendLine("\t.method public static void main(){");
-                builder.AppendLine("\t\t.entrypoint");
-                builder.AppendLine(InitializeVariablesOnScope(currentScope));
-                Visit((dynamic)node.Last());
-                builder.AppendLine("\t\tret");
-                builder.AppendLine("\t}");
-            }
-            else
-            {
-                VisitChildren(node);
-            }
+            builder.AppendLine(DeclareVariablesOnScope(""));
+
+            Visit((dynamic)node[node.Count() - 2]);
+
+            builder.AppendLine("\t.method public static void main(){");
+            builder.AppendLine("\t\t.entrypoint");
+            builder.AppendLine(InitializeVariablesOnScope(""));
+            Visit((dynamic)node.Last());
+            builder.AppendLine("\t\tret");
+            builder.AppendLine("\t}");
             builder.AppendLine("}");
         }
         public void Visit(StatementListNode node)
@@ -282,23 +276,18 @@ namespace Chimera
 
         public void Visit(LoopStatementNode node)
         {
-            var lastInLoopOrFor = inLoopOrFor;
             var lastId = currentId;
             currentId = id++;
             builder.AppendLine($"loop_{currentId}:");
-            inLoopOrFor = true;
             VisitChildren(node);
             builder.Append($"end_{currentId}");
 
-            inLoopOrFor = lastInLoopOrFor;
             currentId = lastId;
         }
         public void Visit(ForStatementNode node)
         {
             string varName = node[0].AnchorToken.Lexeme;
             string indexVarName = $"__{varName}_index";
-            var lastInLoopOrFor = inLoopOrFor;
-            inLoopOrFor = true;
             builder.AppendLine("\t\tldc.i4.0");
             StoreInVariable(indexVarName);
 
@@ -336,7 +325,6 @@ namespace Chimera
 
             builder.AppendLine($"\tend_{currentId}:");
             builder.AppendLine($"\t\tpop");
-            inLoopOrFor = lastInLoopOrFor;
         }
         public void Visit(ExitNode node)
         {

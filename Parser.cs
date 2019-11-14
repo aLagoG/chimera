@@ -7,6 +7,7 @@ Authors:
 	A01371719 Servio Tulio Reyes Castillo
 */
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Chimera
@@ -246,42 +247,37 @@ namespace Chimera
         public Node Program()
         {
             var program_node = new ProgramNode();
-            program_node.Add(Optional(TokenCategory.CONST, () =>
+
+            program_node.Add(new ConstantListNode());
+            if (Has(TokenCategory.CONST))
             {
-                var node = new ConstantListNode()
-                {
-                    AnchorToken = Expect(TokenCategory.CONST)
-                };
+                var node = program_node.Last();
+                node.AnchorToken = Expect(TokenCategory.CONST);
                 node.Add(OneOrMore(TokenCategory.IDENTIFIER, ConstantDeclaration));
-                return node;
-            }));
+            };
 
-            program_node.Add(Optional(TokenCategory.VAR, () =>
+            program_node.Add(new VariableDeclarationNode());
+            if (Has(TokenCategory.VAR))
             {
-                var node = new VariableDeclarationNode()
-                {
-                    AnchorToken = Expect(TokenCategory.VAR)
-                };
+                var node = program_node.Last();
+                node.AnchorToken = Expect(TokenCategory.VAR);
                 node.Add(OneOrMore(TokenCategory.IDENTIFIER, VariableDeclaration));
-                return node;
-            }));
+            }
 
+            program_node.Add(new ProcedureListNode());
             if (Has(TokenCategory.PROCEDURE))
             {
-                program_node.Add(new ProcedureListNode()
-                {
-                    ZeroOrMore(TokenCategory.PROCEDURE, ProcedureDeclaration)
-                });
+                var node = program_node.Last();
+                node.Add(ZeroOrMore(TokenCategory.PROCEDURE, ProcedureDeclaration));
             }
 
             program_node.AnchorToken = Expect(TokenCategory.PROGRAM);
 
+            program_node.Add(new StatementListNode());
             if (Has(firstOfStatement))
             {
-                program_node.Add(new StatementListNode()
-                {
-                    ZeroOrMore(firstOfStatement, Statement)
-                });
+                var node = program_node.Last();
+                node.Add(ZeroOrMore(firstOfStatement, Statement));
             }
 
             Expect(TokenCategory.END);
