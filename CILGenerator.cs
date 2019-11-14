@@ -13,6 +13,7 @@ using System.Collections.Generic;
 
 namespace Chimera
 {
+    using VariableType = KeyValuePair<string, SymbolTable.Row>;
 
     class CILGenerator
     {
@@ -38,7 +39,6 @@ namespace Chimera
         private int id = 0;
         private int currentId = 0;
         private int currentIfId = 0;
-
         private int currentElseCount = 0;
 
         private StringBuilder builder = new StringBuilder();
@@ -61,6 +61,7 @@ namespace Chimera
             builder.AppendLine(".assembly 'Chimera' {}");
             builder.AppendLine(".assembly extern 'ChimeraLib' {}");
             builder.AppendLine(".class public 'ChimeraProgram' extends ['mscorlib']'System'.'Object' {");
+            builder.AppendLine(DeclareVariablesOnScope(currentScope));
             VisitChildren(node);
             builder.AppendLine("}");
         }
@@ -70,22 +71,8 @@ namespace Chimera
             {
                 builder.AppendLine("\t.method public static void main(){");
                 builder.AppendLine("\t\t.entrypoint");
-                foreach (var globalVar in symbolTable)
-                {
-                    if (globalVar.Value.kind == Kind.VAR)
-                    {
-                        string defaultValue = GetTypeDefaultCilValue(globalVar.Value.type);
-                        builder.AppendLine($"\t\t{defaultValue}");
-                        builder.AppendLine($"\t\tstsfld {globalVar.Value.type.ToCilType()} class ['Chimera']'ChimeraProgram'::'{globalVar.Key}'");
-                    }
-                    else
-                    {
-                        string constValue = GetConstSymbolCilValue(globalVar.Key, globalVar.Value);
-                        builder.AppendLine($"\t\t{constValue}");
-                        builder.AppendLine($"\t\tstsfld {globalVar.Value.type.ToCilType()} class ['Chimera']'ChimeraProgram'::'{globalVar.Key}'");
-                    }
-                }
             }
+            builder.AppendLine(InitializeVariablesOnScope(currentScope));
             VisitChildren(node);
             if (currentScope == "")
             {
@@ -256,36 +243,15 @@ namespace Chimera
 
         public void Visit(ConstantListNode node)
         {
-            VisitChildren(node);
+            // Do nothing
         }
         public void Visit(ConstantDeclarationNode node)
         {
-            var varName = node.AnchorToken.Lexeme;
-            Type varType = GetSymbol(varName).type;
-            string cilType = varType.ToCilType();
-            builder.AppendLine($"\t.field public static {cilType} '{varName}'");
-            constantValues[varName] = int.Parse(node[0].AnchorToken.Lexeme);
+            // Do nothing
         }
         public void Visit(VariableDeclarationNode node)
         {
-            foreach (var typeNode in node)
-            {
-                foreach (var idNode in typeNode)
-                {
-                    var varName = idNode.AnchorToken.Lexeme;
-                    Type varType = GetSymbol(varName).type;
-                    string cilType = varType.ToCilType();
-
-                    if (currentScope == "")
-                    {
-                        builder.AppendLine($"\t.field public static {cilType} '{varName}'");
-                    }
-                    else
-                    {
-                        builder.AppendLine($"\t\t{cilType} '{varName}'");
-                    }
-                }
-            }
+            // Do nothing
         }
 
         public void Visit(AssignmentNode node)
@@ -429,75 +395,24 @@ namespace Chimera
             currentScope = procedureName;
 
             builder.Append($"\t.method public static {returnType} '{procedureName}'(");
-
-            var _params = GetParams(procedure);
-            var start = true;
-            foreach (var param in _params)
-            {
-                if (!start)
-                {
-                    builder.Append(", ");
-                }
-                start = false;
-                builder.Append($"{param.Value.type.ToCilType()} {param.Key}");
-            }
+            builder.Append(DeclareParameters(procedureName));
 
             builder.AppendLine("){");
-            builder.Append("\t\t.locals init(");
-            var locals = GetLocals(procedure);
-            start = true;
-            foreach (var local in locals)
-            {
-                if (!start)
-                {
-                    builder.Append(",");
-                }
-                start = false;
-                builder.AppendLine();
-                builder.Append($"\t\t\t{local.Value.type.ToCilType()} {local.Key}");
-            }
-            builder.AppendLine();
-            builder.AppendLine("\t\t)");
+            builder.AppendLine(DeclareVariablesOnScope(procedureName));
 
-            start = true;
-            foreach (var local in locals)
+            if (node.Last() is StatementListNode)
             {
-                if (local.Value.kind == Kind.VAR)
-                {
-                    string defaultValue = GetTypeDefaultCilValue(local.Value.type);
-                    builder.AppendLine($"\t\t{defaultValue}");
-                    builder.AppendLine($"\t\tstloc '{local.Key}'");
-                }
-                else
-                {
-                    string constValue = GetConstSymbolCilValue(local.Key, local.Value);
-                    builder.AppendLine($"\t\t{constValue}");
-                    builder.AppendLine($"\t\tstloc '{local.Key}'");
-                }
+                Visit((dynamic)node.Last());
             }
-
-
-            if (node[node.Count() - 1] is StatementListNode)
-            {
-                Visit((dynamic)node[node.Count() - 1]);
-            }
-            currentScope = lastScope;
 
             builder.AppendLine("\t\tret");
             builder.AppendLine("\t}");
+
+            currentScope = lastScope;
         }
         public void Visit(ParameterDeclarationNode node)
         {
-            foreach (var typeNode in node)
-            {
-                foreach (var idNode in typeNode)
-                {
-                    var varName = idNode.AnchorToken.Lexeme;
-                    Type type = GetSymbol(varName).type;
-                    string cilType = type.ToCilType();
-                    builder.Append($"{cilType} {varName},");
-                }
-            }
+            // do nothing
         }
         public void Visit(ReturnStatementNode node)
         {
@@ -545,28 +460,46 @@ namespace Chimera
         //     return Type.STRING;
         // }
 
-        private IEnumerable<KeyValuePair<string, SymbolTable.Row>> GetParams(ProcedureTable.Row procedure)
+        private SymbolTable GetScopeSymbols(string scope)
         {
-            return procedure.symbols.Where(kv => kv.Value.kind == Kind.PARAM)
+            if (scope == "")
+            {
+                return symbolTable;
+            }
+            else
+            {
+                return procedureTable[scope].symbols;
+            }
+        }
+
+        private IEnumerable<VariableType> GetParams(string scope)
+        {
+            SymbolTable table = GetScopeSymbols(scope);
+            return table.Where(kv => kv.Value.kind == Kind.PARAM)
                             .OrderBy(kv => kv.Value.pos);
         }
 
-        private IEnumerable<KeyValuePair<string, SymbolTable.Row>> GetLocals(ProcedureTable.Row procedure)
+
+        private IEnumerable<VariableType> GetLocals(string scope)
         {
-            return procedure.symbols.Where(kv => kv.Value.kind != Kind.PARAM)
+            SymbolTable table = GetScopeSymbols(scope);
+            return table.Where(kv => kv.Value.kind != Kind.PARAM)
                             .OrderBy(kv => kv.Value.pos);
         }
 
-        // private string GetLoadCilType(){
-        //     switch (type)
-        //     {
-        //         case Type.BOOL:
-        //         case Type.INT:
-        //             return "ldc.i4";
-        //         case Type.STRING:
-        //             return "ldstr";
-        //     }
-        // }
+        private IEnumerable<VariableType> GetLocalVars(string scope)
+        {
+            SymbolTable table = GetScopeSymbols(scope);
+            return table.Where(kv => kv.Value.kind == Kind.VAR)
+                            .OrderBy(kv => kv.Value.pos);
+        }
+
+        private IEnumerable<VariableType> GetLocalConstants(string scope)
+        {
+            SymbolTable table = GetScopeSymbols(scope);
+            return table.Where(kv => kv.Value.kind == Kind.CONST)
+                            .OrderBy(kv => kv.Value.pos);
+        }
 
         private string GetTypeDefaultCilValue(Type type)
         {
@@ -659,7 +592,7 @@ namespace Chimera
             Console.WriteLine(procedureName);
             VisitChildren(node);
             builder.Append($"\t\tcall {returnType} class {_prefix}::'{procedureName}'(");
-            var _params = GetParams(procedure);
+            var _params = GetParams(procedureName);
             var start = true;
             foreach (var param in _params)
             {
@@ -684,6 +617,104 @@ namespace Chimera
             {
                 Visit((dynamic)n);
             }
+        }
+
+        private string DeclareParameters(string procedureName)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            var _params = GetParams(procedureName);
+            var start = true;
+            foreach (var param in _params)
+            {
+                if (!start)
+                {
+                    stringBuilder.Append(", ");
+                }
+                start = false;
+                stringBuilder.Append(DeclareLocalVar(param));
+            }
+            return stringBuilder.ToString();
+        }
+
+        private string InitializeVariablesOnScope(string scope)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            var locals = GetLocals(scope);
+
+            if (scope == "")
+            {
+                foreach (var global in locals)
+                {
+                    stringBuilder.Append(InitializeStaticVariable(global));
+                }
+            }
+            else
+            {
+                foreach (var local in locals)
+                {
+                    stringBuilder.Append(InitializeLocalVariable(local));
+                }
+            }
+            return stringBuilder.ToString();
+        }
+
+        private string InitializeStaticVariable(VariableType variable)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            string defaultValue = GetTypeDefaultCilValue(variable.Value.type);
+            stringBuilder.AppendLine($"\t\t{defaultValue}");
+            stringBuilder.AppendLine($"\t\tstsfld {variable.Value.type.ToCilType()} class ['Chimera']'ChimeraProgram'::'{variable.Key}'");
+            return stringBuilder.ToString();
+        }
+        private string InitializeLocalVariable(VariableType variable)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            string defaultValue = GetTypeDefaultCilValue(variable.Value.type);
+            stringBuilder.AppendLine($"\t\t{defaultValue}");
+            stringBuilder.AppendLine($"\t\tstloc '{variable.Key}'");
+            return stringBuilder.ToString();
+        }
+
+        private string DeclareVariablesOnScope(string scope)
+        {
+            var locals = GetLocals(scope);
+            var start = true;
+            StringBuilder stringBuilder = new StringBuilder();
+            if (scope == "")
+            {
+                foreach (var global in locals)
+                {
+                    stringBuilder.AppendLine(DeclareGlobalVar(global));
+                }
+            }
+            else
+            {
+                stringBuilder.Append("\t\t.locals init (");
+                start = true;
+                foreach (var local in locals)
+                {
+                    if (!start)
+                    {
+                        stringBuilder.Append(", ");
+                    }
+                    stringBuilder.AppendLine();
+                    start = false;
+                    stringBuilder.Append($"\t\t\t{DeclareLocalVar(local)}");
+                }
+                stringBuilder.AppendLine();
+                stringBuilder.AppendLine("\t\t)");
+            }
+            return stringBuilder.ToString();
+        }
+
+        private string DeclareGlobalVar(VariableType variable)
+        {
+            return $"\t.field public static {variable.Value.type.ToCilType()} '{variable.Key}'";
+        }
+
+        private string DeclareLocalVar(VariableType variable)
+        {
+            return $"{variable.Value.type.ToCilType()} {variable.Key}";
         }
 
         SymbolTable.Row GetSymbol(string key)
