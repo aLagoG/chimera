@@ -1,4 +1,4 @@
-SRC := $(shell find . -type f -name "*.cs")
+SRC := $(shell find . -type f -name "*.cs" -maxdepth 1)
 
 chimera.exe: $(SRC) ChimeraLib.dll
 	mcs -out:chimera.exe $(SRC)

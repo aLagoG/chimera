@@ -19,15 +19,17 @@ namespace Chimera
 
         public class Row
         {
-            public Row(Type type, Kind kind, int pos = -1)
+            public Row(Type type, Kind kind, int pos = -1, dynamic value = null)
             {
                 this.type = type;
                 this.kind = kind;
                 this.pos = pos;
+                this.value = value;
             }
             public Type type { get; private set; }
             public Kind kind { get; private set; }
             public int pos { get; private set; }
+            public dynamic value { get; private set; }
 
             public override string ToString()
             {

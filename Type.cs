@@ -73,6 +73,7 @@ namespace Chimera
             switch (type)
             {
                 case Type.BOOL:
+                    return "bool";
                 case Type.INT:
                     return "int32";
                 case Type.STRING:
@@ -86,6 +87,26 @@ namespace Chimera
                     return "void";
             }
             throw new Exception($"Could not find CIL type for: {type}");
+        }
+
+        public static dynamic DefaultValue(this Type t)
+        {
+            switch (t)
+            {
+                case Type.BOOL:
+                    return false;
+                case Type.INT:
+                    return 0;
+                case Type.STRING:
+                    return "";
+                case Type.INT_LIST:
+                    return new int[] { 0 };
+                case Type.BOOL_LIST:
+                    return new bool[] { false };
+                case Type.STRING_LIST:
+                    return new string[] { "" };
+            }
+            return null;
         }
     }
 }

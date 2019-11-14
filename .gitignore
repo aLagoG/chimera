@@ -229,3 +229,4 @@ project.lock.json
 ignore/
 *.il
 *.txt
+*.dll
