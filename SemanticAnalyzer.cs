@@ -57,43 +57,43 @@ namespace Chimera
             procedureTable["RdStr"] = new ProcedureTable.Row(Type.STRING, true);
 
             procedureTable["AtStr"] = new ProcedureTable.Row(Type.STRING, true);
-            procedureTable["AtStr"].symbols["s"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, 0);
-            procedureTable["AtStr"].symbols["i"] = new SymbolTable.Row(Type.INT, Kind.PARAM, 1);
+            procedureTable["AtStr"].symbols["s"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, pos: 0);
+            procedureTable["AtStr"].symbols["i"] = new SymbolTable.Row(Type.INT, Kind.PARAM, pos: 1);
 
             procedureTable["LenStr"] = new ProcedureTable.Row(Type.INT, true);
-            procedureTable["LenStr"].symbols["s"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, 0);
+            procedureTable["LenStr"].symbols["s"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, pos: 0);
 
             procedureTable["CmpStr"] = new ProcedureTable.Row(Type.INT, true);
-            procedureTable["CmpStr"].symbols["s1"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, 0);
-            procedureTable["CmpStr"].symbols["s2"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, 1);
+            procedureTable["CmpStr"].symbols["s1"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, pos: 0);
+            procedureTable["CmpStr"].symbols["s2"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, pos: 1);
 
             procedureTable["CatStr"] = new ProcedureTable.Row(Type.STRING, true);
-            procedureTable["CatStr"].symbols["s1"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, 0);
-            procedureTable["CatStr"].symbols["s2"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, 1);
+            procedureTable["CatStr"].symbols["s1"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, pos: 0);
+            procedureTable["CatStr"].symbols["s2"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, pos: 1);
 
             procedureTable["LenLstInt"] = new ProcedureTable.Row(Type.INT, true);
-            procedureTable["LenLstInt"].symbols["loi"] = new SymbolTable.Row(Type.INT_LIST, Kind.PARAM, 0);
+            procedureTable["LenLstInt"].symbols["loi"] = new SymbolTable.Row(Type.INT_LIST, Kind.PARAM, pos: 0);
 
             procedureTable["LenLstStr"] = new ProcedureTable.Row(Type.INT, true);
-            procedureTable["LenLstStr"].symbols["los"] = new SymbolTable.Row(Type.STRING_LIST, Kind.PARAM, 0);
+            procedureTable["LenLstStr"].symbols["los"] = new SymbolTable.Row(Type.STRING_LIST, Kind.PARAM, pos: 0);
 
             procedureTable["LenLstBool"] = new ProcedureTable.Row(Type.INT, true);
-            procedureTable["LenLstBool"].symbols["lob"] = new SymbolTable.Row(Type.BOOL_LIST, Kind.PARAM, 0);
+            procedureTable["LenLstBool"].symbols["lob"] = new SymbolTable.Row(Type.BOOL_LIST, Kind.PARAM, pos: 0);
 
             procedureTable["NewLstInt"] = new ProcedureTable.Row(Type.INT_LIST, true);
-            procedureTable["NewLstInt"].symbols["size"] = new SymbolTable.Row(Type.INT, Kind.PARAM, 0);
+            procedureTable["NewLstInt"].symbols["size"] = new SymbolTable.Row(Type.INT, Kind.PARAM, pos: 0);
 
             procedureTable["NewLstStr"] = new ProcedureTable.Row(Type.STRING_LIST, true);
-            procedureTable["NewLstStr"].symbols["size"] = new SymbolTable.Row(Type.INT, Kind.PARAM, 0);
+            procedureTable["NewLstStr"].symbols["size"] = new SymbolTable.Row(Type.INT, Kind.PARAM, pos: 0);
 
             procedureTable["NewLstBool"] = new ProcedureTable.Row(Type.BOOL_LIST, true);
-            procedureTable["NewLstBool"].symbols["size"] = new SymbolTable.Row(Type.INT, Kind.PARAM, 0);
+            procedureTable["NewLstBool"].symbols["size"] = new SymbolTable.Row(Type.INT, Kind.PARAM, pos: 0);
 
             procedureTable["IntToStr"] = new ProcedureTable.Row(Type.STRING, true);
-            procedureTable["IntToStr"].symbols["i"] = new SymbolTable.Row(Type.INT, Kind.PARAM, 0);
+            procedureTable["IntToStr"].symbols["i"] = new SymbolTable.Row(Type.INT, Kind.PARAM, pos: 0);
 
             procedureTable["StrToInt"] = new ProcedureTable.Row(Type.INT, true);
-            procedureTable["StrToInt"].symbols["s"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, 0);
+            procedureTable["StrToInt"].symbols["s"] = new SymbolTable.Row(Type.STRING, Kind.PARAM, pos: 0);
         }
 
         public Type Visit(ProgramNode node)
@@ -286,9 +286,44 @@ namespace Chimera
                 throw new SemanticError($"List constants should have at least one element",
                             node.AnchorToken);
             }
-            AddSymbolToScope(varName, type, Kind.CONST);
+            AddSymbolToScope(varName, type, Kind.CONST, value: GetValueFromNode(node[0]));
             return type;
         }
+
+        public dynamic GetValueFromNode(Node node)
+        {
+            if (node is IntLiteralNode)
+            {
+                return Convert.ToInt32(node.AnchorToken.Lexeme);
+            }
+            else if (node is StringLiteralNode)
+            {
+                return node.AnchorToken.Lexeme;
+            }
+            else if (node is BoolLiteralNode)
+            {
+                return Convert.ToBoolean(node.AnchorToken.Lexeme);
+            }
+            else if (node is ListLiteralNode)
+            {
+                if (node.Count() == 0)
+                {
+                    throw new SemanticError("Cannot get the value of an empty list", node.AnchorToken);
+                }
+                Type t = Visit((dynamic)node[0]);
+                switch (t)
+                {
+                    case Type.INT:
+                        return node.Select(n => (int)GetValueFromNode(n)).ToArray();
+                    case Type.BOOL:
+                        return node.Select(n => (bool)GetValueFromNode(n)).ToArray();
+                    case Type.STRING:
+                        return node.Select(n => (string)GetValueFromNode(n)).ToArray();
+                }
+            }
+            return null;
+        }
+
         public Type Visit(VariableDeclarationNode node)
         {
             foreach (var typeNode in node)
@@ -304,7 +339,7 @@ namespace Chimera
                     }
                     else
                     {
-                        AddSymbolToScope(varName, type, Kind.VAR);
+                        AddSymbolToScope(varName, type, Kind.VAR, value: type.DefaultValue());
                     }
                 }
             }
@@ -358,7 +393,7 @@ namespace Chimera
                 throw new SemanticError($"Incompatible types {varType} and {listType}",
                     node[0].AnchorToken);
             }
-            AddSymbolToScope($"__{node[0].AnchorToken.Lexeme}_index", Type.INT, Kind.VAR);
+            AddSymbolToScope($"__{node[0].AnchorToken.Lexeme}_index", Type.INT, Kind.VAR, value: 0);
             var lastInLoopOrFor = inLoopOrFor;
             inLoopOrFor = true;
 
@@ -446,7 +481,7 @@ namespace Chimera
                     }
                     else
                     {
-                        AddSymbolToScope(varName, type, Kind.PARAM, pos++);
+                        AddSymbolToScope(varName, type, Kind.PARAM, pos: pos++, value: type.DefaultValue());
                     }
                 }
             }
@@ -551,7 +586,7 @@ namespace Chimera
             }
         }
 
-        void AddSymbolToScope(string key, Type type, Kind kind, int pos = -1)
+        void AddSymbolToScope(string key, Type type, Kind kind, dynamic value = null, int pos = -1)
         {
             SymbolTable table;
             if (currentScope.Length == 0)
@@ -562,7 +597,7 @@ namespace Chimera
             {
                 table = procedureTable[currentScope].symbols;
             }
-            table[key] = new SymbolTable.Row(type, kind, pos);
+            table[key] = new SymbolTable.Row(type, kind, pos, value);
         }
 
         SymbolTable.Row GetSymbol(string key)

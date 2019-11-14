@@ -29,9 +29,6 @@ namespace Chimera
             private set;
         }
 
-        //TODO: Remove constantValues and use the symbol table.
-        private Dictionary<string, object> constantValues = new Dictionary<string, object>();
-
         private string currentScope = "";
 
         private bool inLoopOrFor = false;
@@ -98,12 +95,7 @@ namespace Chimera
         }
         public void Visit(NotNode node)
         {
-            if (Visit((dynamic)node[0]) != Type.BOOL)
-            {
-                throw new SemanticError(
-                    $"Operator {node.AnchorToken.Lexeme} requires an operand of type {Type.BOOL}",
-                    node.AnchorToken);
-            }
+            Visit((dynamic)node[0]);
             builder.AppendLine("\t\tnot");
         }
 
@@ -178,7 +170,7 @@ namespace Chimera
         }
         public void Visit(BooleanNode node)
         {
-            builder.Append("int32");
+            builder.Append("bool");
         }
         public void Visit(VoidTypeNode node)
         {
@@ -192,27 +184,15 @@ namespace Chimera
 
         public void Visit(IntLiteralNode node)
         {
-            var intStr = node.AnchorToken.Lexeme;
-            try
-            {
-                builder.AppendLine($"\t\tldc.i4 {intStr}");
-            }
-            catch (OverflowException)
-            {
-                throw new SemanticError(
-                    $"Integer literal too large: {intStr}",
-                    node.AnchorToken);
-            }
+            builder.AppendLine($"\t\tldc.i4 {node.AnchorToken.Lexeme}");
         }
         public void Visit(StringLiteralNode node)
         {
-            var str = node.AnchorToken.Lexeme;
-            builder.AppendLine($"\t\tldstr {str}");
+            builder.AppendLine($"\t\tldstr {node.AnchorToken.Lexeme}");
         }
         public void Visit(BoolLiteralNode node)
         {
-            var str = node.AnchorToken.Lexeme;
-            var value = str == "true" ? 1 : 0;
+            var value = node.AnchorToken.Lexeme == "true" ? 1 : 0;
             builder.AppendLine($"\t\tldc.i4.{value}");
         }
         public void Visit(ListLiteralNode node)
@@ -316,14 +296,28 @@ namespace Chimera
         }
         public void Visit(ForStatementNode node)
         {
-            string varName = node.AnchorToken.Lexeme;
+            string varName = node[0].AnchorToken.Lexeme;
             var lastInLoopOrFor = inLoopOrFor;
             inLoopOrFor = true;
             builder.AppendLine("ldc.i4.0");
             builder.AppendLine($"stloc '__{varName}_index'");
-            Visit((dynamic)node[1]);
 
             builder.AppendLine($"for_{currentId}:");
+            Visit((dynamic)node[1]);
+            builder.AppendLine($"ldloc '__{varName}_index'");
+            switch (GetSymbol(varName).type)
+            {
+                case Type.BOOL:
+                case Type.INT:
+                    builder.AppendLine($"ldelem.i4");
+                    break;
+                default:
+                    builder.AppendLine($"ldelem.ref");
+                    break;
+
+            }
+            builder.AppendLine($"stloc {varName}");
+
             Visit((dynamic)node[2]);
 
             builder.AppendLine($"ldloc '__{varName}_index'");
@@ -333,6 +327,9 @@ namespace Chimera
 
             builder.AppendLine($"next_{currentId}:");
             builder.AppendLine($"ldloc '__{varName}_index'");
+            Visit((dynamic)node[1]);
+            builder.AppendLine($"ldlen");
+            builder.AppendLine($"conv.i4");
             builder.AppendLine($"blt for_{currentId}");
 
             builder.AppendLine($"end_{currentId}:");
@@ -521,38 +518,50 @@ namespace Chimera
             throw new Exception($"Could not find CIL type for: {type}");
         }
 
-        private string GetConstSymbolCilValue(string key, SymbolTable.Row symbol)
+        private string GetCilValue(VariableType variable)
         {
             StringBuilder result = new StringBuilder();
             int index = 0;
-            switch (symbol.type)
+            SymbolTable.Row row = variable.Value;
+            switch (row.type)
             {
                 case Type.BOOL:
                 case Type.INT:
-                    return $"ldc.i4 {constantValues[key]}";
+                    return $"ldc.i4 {row.value}";
                 case Type.STRING:
-                    return $"ldstr {constantValues[key]}";
+                    return $"ldstr {row.value}";
                 case Type.BOOL_LIST:
+                    bool[] constBoolArr = row.value as bool[];
+                    result.AppendLine($"ldc.i4 {constBoolArr.Length}");
+                    result.AppendLine("\t\tnewarr int32");
+                    foreach (bool val in constBoolArr)
+                    {
+                        result.AppendLine($"\t\tdup");
+                        result.AppendLine($"\t\tldc.i4 {index++}");
+                        result.AppendLine($"\t\tldc.i4.{(val ? 1 : 0)}");
+                        result.AppendLine($"\t\tstelem.i4");
+                    }
+                    return result.ToString();
                 case Type.INT_LIST:
-                    int[] constIntArr = constantValues[key] as int[];
+                    int[] constIntArr = row.value as int[];
                     result.AppendLine($"ldc.i4 {constIntArr.Length}");
                     result.AppendLine("\t\tnewarr int32");
                     foreach (int val in constIntArr)
                     {
                         result.AppendLine($"\t\tdup");
-                        result.AppendLine($"\t\tldc.i4 {index}");
+                        result.AppendLine($"\t\tldc.i4 {index++}");
                         result.AppendLine($"\t\tldc.i4 {val}");
                         result.AppendLine($"\t\tstelem.i4");
                     }
                     return result.ToString();
                 case Type.STRING_LIST:
-                    string[] constStrArr = constantValues[key] as string[];
+                    string[] constStrArr = row.value as string[];
                     result.AppendLine($"ldc.i4 {constStrArr.Length}");
                     result.AppendLine("\t\tnewarr string");
                     foreach (string val in constStrArr)
                     {
                         result.AppendLine($"\t\tdup");
-                        result.AppendLine($"\t\tldc.i4 {index}");
+                        result.AppendLine($"\t\tldc.i4 {index++}");
                         result.AppendLine($"\t\tldstr {val}");
                         result.AppendLine($"\t\tstelem.ref");
                     }
@@ -560,17 +569,7 @@ namespace Chimera
                 case Type.VOID:
                     return "";
             }
-            throw new Exception($"Could not find value for: {key}");
-        }
-
-        private void VerifyCondition(Node node)
-        {
-            Type conditionType = Visit((dynamic)node[0]);
-            if (conditionType != Type.BOOL)
-            {
-                throw new SemanticError($"Condition has to be of type {Type.BOOL} but got {conditionType}",
-                    node.AnchorToken);
-            }
+            throw new Exception($"Could not find value for: {variable.Key}");
         }
 
         private void VerifyCall(Node node)
@@ -661,16 +660,16 @@ namespace Chimera
         private string InitializeStaticVariable(VariableType variable)
         {
             StringBuilder stringBuilder = new StringBuilder();
-            string defaultValue = GetTypeDefaultCilValue(variable.Value.type);
-            stringBuilder.AppendLine($"\t\t{defaultValue}");
+            string value = GetCilValue(variable);
+            stringBuilder.AppendLine($"\t\t{value}");
             stringBuilder.AppendLine($"\t\tstsfld {variable.Value.type.ToCilType()} class ['Chimera']'ChimeraProgram'::'{variable.Key}'");
             return stringBuilder.ToString();
         }
         private string InitializeLocalVariable(VariableType variable)
         {
             StringBuilder stringBuilder = new StringBuilder();
-            string defaultValue = GetTypeDefaultCilValue(variable.Value.type);
-            stringBuilder.AppendLine($"\t\t{defaultValue}");
+            string value = GetCilValue(variable);
+            stringBuilder.AppendLine($"\t\t{value}");
             stringBuilder.AppendLine($"\t\tstloc '{variable.Key}'");
             return stringBuilder.ToString();
         }

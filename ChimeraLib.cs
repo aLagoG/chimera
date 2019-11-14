@@ -22,16 +22,9 @@ namespace Chimera
         {
             Console.Write(s);
         }
-        public static void WrBool(int b)
+        public static void WrBool(bool b)
         {
-            if (b == 0)
-            {
-                Console.Write("false");
-            }
-            else if (b == 1)
-            {
-                Console.Write("true");
-            }
+            Console.Write(Convert.ToString(b).ToLower());
         }
         public static void WrLn()
         {
