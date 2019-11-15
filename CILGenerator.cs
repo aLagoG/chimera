@@ -188,7 +188,11 @@ namespace Chimera
         }
         public void Visit(StringLiteralNode node)
         {
-            builder.AppendLine($"\t\tldstr {node.AnchorToken.Lexeme}");
+            var literal = node.AnchorToken.Lexeme;
+            literal = literal.Substring(1, literal.Count() - 2);
+            builder.AppendLine($"//literal: {literal}");
+            literal = literal.Replace("\"\"", "\\\"");
+            builder.AppendLine($"\t\tldstr \"{literal}\"");
         }
         public void Visit(BoolLiteralNode node)
         {
@@ -464,7 +468,7 @@ namespace Chimera
                 string defaultValue = GetTypeDefaultCilValue(returnType);
                 builder.AppendLine($"\t\t{defaultValue}");
             }
-            builder.AppendLine("ret");
+            builder.AppendLine("\t\tret");
         }
 
         public void Visit(CallStatementNode node)
@@ -776,10 +780,18 @@ namespace Chimera
 
         private void StoreInVariable(string varName)
         {
-            string varType = GetSymbol(varName).type.ToCilType();
+            var symbol = GetSymbol(varName);
+            var varType = symbol.type.ToCilType();
             if (currentScope != "" && procedureTable[currentScope].symbols.Contains(varName))
             {
-                builder.AppendLine($"\t\tstloc {varName}");
+                if (symbol.kind == Kind.PARAM)
+                {
+                    builder.AppendLine($"\t\tstarg {varName}");
+                }
+                else
+                {
+                    builder.AppendLine($"\t\tstloc {varName}");
+                }
             }
             else
             {
