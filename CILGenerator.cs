@@ -518,10 +518,14 @@ namespace Chimera
             switch (row.type)
             {
                 case Type.BOOL:
+                    var b = row.value ? 1 : 0;
+                    return $"ldc.i4.{b}";
                 case Type.INT:
                     return $"ldc.i4 {row.value}";
                 case Type.STRING:
-                    return $"ldstr {row.value}";
+                    string s = row.value;
+                    s = s.Count() == 0 ? "\"\"" : s;
+                    return $"ldstr {s}";
                 case Type.BOOL_LIST:
                     bool[] constBoolArr = row.value as bool[];
                     result.AppendLine($"ldc.i4 {constBoolArr.Length}");
@@ -580,7 +584,6 @@ namespace Chimera
                 _prefix = "['Chimera']'ChimeraProgram'";
             }
 
-            Console.WriteLine(procedureName);
             VisitChildren(node);
             builder.Append($"\t\tcall {returnType} class {_prefix}::'{procedureName}'(");
             var _params = GetParams(procedureName);
