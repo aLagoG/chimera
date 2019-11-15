@@ -188,11 +188,7 @@ namespace Chimera
         }
         public void Visit(StringLiteralNode node)
         {
-            var literal = node.AnchorToken.Lexeme;
-            literal = literal.Substring(1, literal.Count() - 2);
-            builder.AppendLine($"//literal: {literal}");
-            literal = literal.Replace("\"\"", "\\\"");
-            builder.AppendLine($"\t\tldstr \"{literal}\"");
+            builder.AppendLine($"\t\tldstr {EscapeString(node.AnchorToken.Lexeme)}");
         }
         public void Visit(BoolLiteralNode node)
         {
@@ -345,9 +341,10 @@ namespace Chimera
             }
             StoreInVariable(varName);
 
-            builder.AppendLine($"// visiting {node[1].GetType().Name}");
+            builder.AppendLine();
             Visit((dynamic)node[2]);
 
+            builder.AppendLine();
             LoadVariable(indexVarName);
             builder.AppendLine("\t\tldc.i4.1");
             builder.AppendLine("\t\tadd");
@@ -811,6 +808,12 @@ namespace Chimera
                 return symbolTable[key];
             }
             return null;
+        }
+
+        string EscapeString(string s)
+        {
+            var tmp = s.Substring(1, s.Length - 2).Replace("\"\"", "\\\"");
+            return $"\"{tmp}\"";
         }
     }
 }
