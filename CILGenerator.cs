@@ -57,12 +57,14 @@ namespace Chimera
             builder.AppendLine(".assembly 'Chimera' {}");
             builder.AppendLine(".assembly extern 'ChimeraLib' {}");
             builder.AppendLine(".class public 'ChimeraProgram' extends ['mscorlib']'System'.'Object' {");
+            builder.AppendLine();
             builder.AppendLine(DeclareVariablesOnScope(""));
 
             Visit((dynamic)node[node.Count() - 2]);
 
             builder.AppendLine("\t.method public static void main(){");
             builder.AppendLine("\t\t.entrypoint");
+            builder.AppendLine();
             builder.AppendLine(InitializeVariablesOnScope(""));
             Visit((dynamic)node.Last());
             builder.AppendLine("\t\tret");
@@ -92,7 +94,8 @@ namespace Chimera
         public void Visit(NotNode node)
         {
             Visit((dynamic)node[0]);
-            builder.AppendLine("\t\tnot");
+            builder.AppendLine("\t\tldc.i4.1");
+            builder.AppendLine("\t\txor");
         }
 
         public void Visit(EqualNode node)
@@ -104,7 +107,8 @@ namespace Chimera
         {
             VisitChildren(node);
             builder.AppendLine("\t\tceq");
-            builder.AppendLine("\t\tnot");
+            builder.AppendLine("\t\tldc.i4.1");
+            builder.AppendLine("\t\txor");
         }
 
         public void Visit(LessThanNode node)
@@ -121,13 +125,15 @@ namespace Chimera
         {
             VisitChildren(node);
             builder.AppendLine("\t\tcgt");
-            builder.AppendLine("\t\tnot");
+            builder.AppendLine("\t\tldc.i4.1");
+            builder.AppendLine("\t\txor");
         }
         public void Visit(MoreThanEqualNode node)
         {
             VisitChildren(node);
             builder.AppendLine("\t\tclt");
-            builder.AppendLine("\t\tnot");
+            builder.AppendLine("\t\tldc.i4.1");
+            builder.AppendLine("\t\txor");
         }
 
         public void Visit(MinusNode node)
@@ -278,9 +284,10 @@ namespace Chimera
         {
             var lastId = currentId;
             currentId = id++;
-            builder.AppendLine($"loop_{currentId}:");
+            builder.AppendLine($"\tloop_{currentId}:");
             VisitChildren(node);
-            builder.Append($"end_{currentId}");
+            builder.AppendLine($"\t\tbr loop_{currentId}");
+            builder.AppendLine($"\tend_{currentId}:");
 
             currentId = lastId;
         }
@@ -333,7 +340,7 @@ namespace Chimera
         }
         public void Visit(ExitNode node)
         {
-            builder.AppendLine($"br end_{currentId}");
+            builder.AppendLine($"\t\tbr end_{currentId}");
         }
 
         public void Visit(IfStatementNode node)
@@ -351,7 +358,6 @@ namespace Chimera
             builder.AppendLine();
 
             VisitChildren(node, 2);
-            builder.AppendLine();
             builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount + 1}:");
             builder.AppendLine($"\tIf_{currentIfId}_End:");
 
@@ -378,6 +384,7 @@ namespace Chimera
             currentElseCount++;
             builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}:");
             VisitChildren(node);
+            builder.AppendLine();
         }
 
         public void Visit(ProcedureListNode node)
