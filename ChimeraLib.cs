@@ -44,7 +44,7 @@ namespace Chimera
         {
             return $"{s[i]}";
         }
-        public static int LensStrs(string s)
+        public static int LenStr(string s)
         {
             return s.Length;
         }
