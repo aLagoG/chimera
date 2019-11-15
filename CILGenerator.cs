@@ -286,6 +286,9 @@ namespace Chimera
         }
         public void Visit(ForStatementNode node)
         {
+            var lastId = currentId;
+            currentId = id++;
+
             string varName = node[0].AnchorToken.Lexeme;
             string indexVarName = $"__{varName}_index";
             builder.AppendLine("\t\tldc.i4.0");
@@ -325,6 +328,8 @@ namespace Chimera
 
             builder.AppendLine($"\tend_{currentId}:");
             builder.AppendLine($"\t\tpop");
+
+            currentId = lastId;
         }
         public void Visit(ExitNode node)
         {
