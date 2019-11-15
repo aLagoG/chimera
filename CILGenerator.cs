@@ -188,7 +188,7 @@ namespace Chimera
         }
         public void Visit(StringLiteralNode node)
         {
-            builder.AppendLine($"\t\tldstr {node.AnchorToken.Lexeme}");
+            builder.AppendLine($"\t\tldstr {EscapeString(node.AnchorToken.Lexeme)}");
         }
         public void Visit(BoolLiteralNode node)
         {
@@ -777,10 +777,19 @@ namespace Chimera
 
         private void StoreInVariable(string varName)
         {
-            string varType = GetSymbol(varName).type.ToCilType();
+            var symbol = GetSymbol(varName);
+            string varType = symbol.type.ToCilType();
             if (currentScope != "" && procedureTable[currentScope].symbols.Contains(varName))
             {
-                builder.AppendLine($"\t\tstloc {varName}");
+                if (symbol.kind == Kind.VAR)
+                {
+                    builder.AppendLine($"\t\tstloc {varName}");
+                }
+                else
+                {
+                    builder.AppendLine($"\t\tstarg {varName}");
+
+                }
             }
             else
             {
@@ -800,6 +809,12 @@ namespace Chimera
                 return symbolTable[key];
             }
             return null;
+        }
+
+        string EscapeString(string s)
+        {
+            var tmp = s.Substring(1, s.Length - 2).Replace("\"\"", "\\\"");
+            return $"\"{tmp}\"";
         }
     }
 }
