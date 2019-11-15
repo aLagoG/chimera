@@ -3,8 +3,15 @@
  * (C) 2019 Ariel Ortiz, ITESM CEM
  */
 
+
 const
     konstant := 1;
+    lst := {1, 2, 3, 4};
+    l_s := {"a", "b", "c"};
+    l_b := {true, false, true};
+    ks := "abc";
+    kb := true;
+
 
 var
     x, y: integer;
@@ -37,16 +44,57 @@ procedure F(
 procedure G();
 
     var
-        y: integer;
+        y, i: integer;
+        s: string;
+        b: boolean;
 
     begin
-        x := x + konstant;
-        y := y + konstant;
-        WrInt(x);
+
+        for s in l_s do
+            WrStr(s);
+            WrStr(", ");
+        end;
         WrLn();
-        WrInt(y);
+
+        for b in l_b do
+            WrBool(b);
+            WrStr(", ");
+        end;
         WrLn();
-        F(false, 5);
+
+        for i in lst do
+            WrInt(i);
+            WrStr(", ");
+        end;
+        WrLn();
+
+/*
+        y := 4;
+        if y = 1 then
+            WrStr("if\n");
+        elseif y = 2 then
+            WrStr("elif 1\n");
+        elseif y = 3 then
+            WrStr("elif 2\n");
+        else
+            WrStr("else\n");
+        end;
+*/
+/*
+        WrLn();
+        y := 0;
+        loop
+            if y >= LenLstStr(l_s) then
+                WrLn();
+                exit;
+            end;
+            if y > 0 then
+                WrStr(", ");
+            end;
+            WrStr(l_s[y]);
+            y := y + 1;
+        end;
+*/
     end;
 
 program

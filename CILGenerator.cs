@@ -318,9 +318,10 @@ namespace Chimera
             }
             StoreInVariable(varName);
 
-            builder.AppendLine($"// visiting {node[1].GetType().Name}");
+            builder.AppendLine();
             Visit((dynamic)node[2]);
 
+            builder.AppendLine();
             LoadVariable(indexVarName);
             builder.AppendLine("\t\tldc.i4.1");
             builder.AppendLine("\t\tadd");
