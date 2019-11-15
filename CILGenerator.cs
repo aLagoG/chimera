@@ -342,14 +342,18 @@ namespace Chimera
             int previousElseCount = currentElseCount;
             currentElseCount = 0;
 
+            builder.AppendLine();
             Visit((dynamic)node[0]);
-            builder.AppendLine($"brzero If_{currentIfId}_1");
-            builder.AppendLine($"If_{currentIfId}_0:");
+            builder.AppendLine($"\t\tbrzero If_{currentIfId}_1");
+            builder.AppendLine($"\tIf_{currentIfId}_0:");
             Visit((dynamic)node[1]);
-            builder.AppendLine($"br If_{currentIfId}_End");
+            builder.AppendLine($"\t\tbr If_{currentIfId}_End");
+            builder.AppendLine();
+
             VisitChildren(node, 2);
-            builder.AppendLine($"If_{currentIfId}_{currentElseCount + 1}:");
-            builder.AppendLine($"If_{currentIfId}_End:");
+            builder.AppendLine();
+            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount + 1}:");
+            builder.AppendLine($"\tIf_{currentIfId}_End:");
 
             currentElseCount = previousElseCount;
         }
@@ -360,18 +364,20 @@ namespace Chimera
         public void Visit(ElifStatementNode node)
         {
             currentElseCount++;
+            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}:");
             Visit((dynamic)node[0]);
-            builder.AppendLine($"brzero If_{currentIfId}_{currentElseCount + 1}");
-            builder.AppendLine($"If_{currentIfId}_{currentElseCount}:");
+            builder.AppendLine($"\t\tbrzero If_{currentIfId}_{currentElseCount + 1}");
+            builder.AppendLine();
+
             VisitChildren(node, 1);
-            builder.AppendLine($"If_{currentIfId}_End:");
+            builder.AppendLine($"\t\tbr If_{currentIfId}_End");
+            builder.AppendLine();
         }
         public void Visit(ElseStatementNode node)
         {
             currentElseCount++;
-            builder.AppendLine($"If_{currentIfId}_{currentElseCount}:");
+            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}:");
             VisitChildren(node);
-            builder.AppendLine($"If_{currentIfId}_End:");
         }
 
         public void Visit(ProcedureListNode node)
