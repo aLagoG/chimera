@@ -73,6 +73,8 @@ namespace Chimera
         private static int lastId = 0;
         private int id { get; set; }
 
+        public dynamic extra { get; set; }
+
         public Node()
         {
             id = lastId++;

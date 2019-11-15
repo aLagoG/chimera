@@ -260,6 +260,7 @@ namespace Chimera
         {
             Type type = Visit((dynamic)node[0]);
             Type indexType = Visit((dynamic)node[1]);
+            node.extra = type;
             if (indexType != Type.INT)
             {
                 throw new SemanticError($"List indexes should be {Type.INT}, got {indexType}", node[1].AnchorToken);

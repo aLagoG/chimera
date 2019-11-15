@@ -38,7 +38,10 @@ namespace Chimera
     class ListLiteralNode : Node { }
     class ConstantDeclarationNode : Node { }
     class ConstantListNode : Node { }
-    class IdentifierNode : Node { }
+    class IdentifierNode : Node
+    {
+        public bool isAssignment { get; set; } = false;
+    }
     class ReturnStatementNode : Node { }
     class LoopStatementNode : Node { }
     class VariableDeclarationNode : Node { }
@@ -54,6 +57,9 @@ namespace Chimera
     class AssignmentNode : Node { }
     class CallStatementNode : Node { }
     class CallNode : Node { }
-    class ListIndexNode : Node { }
+    class ListIndexNode : Node
+    {
+        public bool isAssignment { get; set; } = false;
+    }
     class ElseIfListNode : Node { }
 }
