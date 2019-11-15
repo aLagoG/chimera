@@ -30,8 +30,6 @@ namespace Chimera
         }
 
         private string currentScope = "";
-
-        private bool inAssignment = false;
         private int id = 0;
         private int currentId = 0;
         private int currentIfId = 0;
@@ -234,10 +232,19 @@ namespace Chimera
         {
             Visit((dynamic)node[0]);
             Visit((dynamic)node[1]);
-
-            if (!inAssignment)
+            Type type = node.extra;
+            if (!node.isAssignment)
             {
-                builder.AppendLine("\t\tldelem.ref");
+                switch (type)
+                {
+                    case Type.BOOL_LIST:
+                    case Type.INT_LIST:
+                        builder.AppendLine("\t\tldelem.i4");
+                        break;
+                    case Type.STRING_LIST:
+                        builder.AppendLine("\t\tldelem.ref");
+                        break;
+                }
             }
         }
 
@@ -256,13 +263,30 @@ namespace Chimera
 
         public void Visit(AssignmentNode node)
         {
-            inAssignment = true;
+            Node first = node[0];
+            if (first is ListIndexNode)
+            {
+                (first as ListIndexNode).isAssignment = true;
+            }
+            else if (first is IdentifierNode)
+            {
+                (first as IdentifierNode).isAssignment = true;
+            }
             Visit((dynamic)node[0]);
-            inAssignment = false;
             Visit((dynamic)node[1]);
             if (node[0] is ListIndexNode)
             {
-                builder.AppendLine("stelem.ref");
+                Type type = node[0].extra;
+                switch (type)
+                {
+                    case Type.BOOL_LIST:
+                    case Type.INT_LIST:
+                        builder.AppendLine("\t\tstelem.i4");
+                        break;
+                    case Type.STRING_LIST:
+                        builder.AppendLine("\t\tstelem.ref");
+                        break;
+                }
             }
             else
             {
@@ -273,8 +297,7 @@ namespace Chimera
         public void Visit(IdentifierNode node)
         {
             string varName = node.AnchorToken.Lexeme;
-
-            if (!inAssignment)
+            if (!node.isAssignment)
             {
                 LoadVariable(varName);
             }
@@ -351,15 +374,17 @@ namespace Chimera
             currentElseCount = 0;
 
             builder.AppendLine();
+            builder.AppendLine($"\tIf_{currentIfId}_0_condition:");
             Visit((dynamic)node[0]);
-            builder.AppendLine($"\t\tbrzero If_{currentIfId}_1");
-            builder.AppendLine($"\tIf_{currentIfId}_0:");
+            builder.AppendLine($"\t\tbrzero If_{currentIfId}_1_condition");
+
+            builder.AppendLine($"\tIf_{currentIfId}_0_body:");
             Visit((dynamic)node[1]);
             builder.AppendLine($"\t\tbr If_{currentIfId}_End");
             builder.AppendLine();
 
             VisitChildren(node, 2);
-            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount + 1}:");
+            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount + 1}_condition:");
             builder.AppendLine($"\tIf_{currentIfId}_End:");
 
             currentElseCount = previousElseCount;
@@ -371,11 +396,13 @@ namespace Chimera
         public void Visit(ElifStatementNode node)
         {
             currentElseCount++;
-            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}:");
+
+            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}_condition:");
             Visit((dynamic)node[0]);
-            builder.AppendLine($"\t\tbrzero If_{currentIfId}_{currentElseCount + 1}");
+            builder.AppendLine($"\t\tbrzero If_{currentIfId}_{currentElseCount + 1}_condition");
             builder.AppendLine();
 
+            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}_body:");
             VisitChildren(node, 1);
             builder.AppendLine($"\t\tbr If_{currentIfId}_End");
             builder.AppendLine();
@@ -383,8 +410,9 @@ namespace Chimera
         public void Visit(ElseStatementNode node)
         {
             currentElseCount++;
-            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}:");
+            builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}_condition:");
             VisitChildren(node);
+            builder.AppendLine($"\t\tbr If_{currentIfId}_End");
             builder.AppendLine();
         }
 
