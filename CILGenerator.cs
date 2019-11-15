@@ -30,8 +30,6 @@ namespace Chimera
         }
 
         private string currentScope = "";
-
-        private bool inLoopOrFor = false;
         private int id = 0;
         private int currentId = 0;
         private int currentIfId = 0;
@@ -57,21 +55,16 @@ namespace Chimera
             builder.AppendLine(".assembly 'Chimera' {}");
             builder.AppendLine(".assembly extern 'ChimeraLib' {}");
             builder.AppendLine(".class public 'ChimeraProgram' extends ['mscorlib']'System'.'Object' {");
-            builder.AppendLine(DeclareVariablesOnScope(currentScope));
-            if (node.Last() is StatementListNode)
-            {
-                VisitChildren(node, take: node.Count() - 1);
-                builder.AppendLine("\t.method public static void main(){");
-                builder.AppendLine("\t\t.entrypoint");
-                builder.AppendLine(InitializeVariablesOnScope(currentScope));
-                Visit((dynamic)node.Last());
-                builder.AppendLine("\t\tret");
-                builder.AppendLine("\t}");
-            }
-            else
-            {
-                VisitChildren(node);
-            }
+            builder.AppendLine(DeclareVariablesOnScope(""));
+
+            Visit((dynamic)node[node.Count() - 2]);
+
+            builder.AppendLine("\t.method public static void main(){");
+            builder.AppendLine("\t\t.entrypoint");
+            builder.AppendLine(InitializeVariablesOnScope(""));
+            Visit((dynamic)node.Last());
+            builder.AppendLine("\t\tret");
+            builder.AppendLine("\t}");
             builder.AppendLine("}");
         }
         public void Visit(StatementListNode node)
@@ -307,24 +300,22 @@ namespace Chimera
 
         public void Visit(LoopStatementNode node)
         {
-            var lastInLoopOrFor = inLoopOrFor;
             var lastId = currentId;
             currentId = id++;
             builder.AppendLine($"\tloop_{currentId}:");
-            inLoopOrFor = true;
             VisitChildren(node);
             builder.AppendLine($"\t\tbr loop_{currentId}");
             builder.AppendLine($"\tend_{currentId}:");
 
-            inLoopOrFor = lastInLoopOrFor;
             currentId = lastId;
         }
         public void Visit(ForStatementNode node)
         {
+            var lastId = currentId;
+            currentId = id++;
+
             string varName = node[0].AnchorToken.Lexeme;
             string indexVarName = $"__{varName}_index";
-            var lastInLoopOrFor = inLoopOrFor;
-            inLoopOrFor = true;
             builder.AppendLine("\t\tldc.i4.0");
             StoreInVariable(indexVarName);
 
@@ -362,7 +353,8 @@ namespace Chimera
 
             builder.AppendLine($"\tend_{currentId}:");
             builder.AppendLine($"\t\tpop");
-            inLoopOrFor = lastInLoopOrFor;
+
+            currentId = lastId;
         }
         public void Visit(ExitNode node)
         {
@@ -375,6 +367,7 @@ namespace Chimera
             int previousElseCount = currentElseCount;
             currentElseCount = 0;
 
+            builder.AppendLine();
             builder.AppendLine($"\tIf_{currentIfId}_0_condition:");
             Visit((dynamic)node[0]);
             builder.AppendLine($"\t\tbrzero If_{currentIfId}_1_condition");
@@ -382,8 +375,10 @@ namespace Chimera
             builder.AppendLine($"\tIf_{currentIfId}_0_body:");
             Visit((dynamic)node[1]);
             builder.AppendLine($"\t\tbr If_{currentIfId}_End");
+            builder.AppendLine();
 
             VisitChildren(node, 2);
+            builder.AppendLine();
             builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount + 1}_condition:");
             builder.AppendLine($"\tIf_{currentIfId}_End:");
 
@@ -400,10 +395,12 @@ namespace Chimera
             builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}_condition:");
             Visit((dynamic)node[0]);
             builder.AppendLine($"\t\tbrzero If_{currentIfId}_{currentElseCount + 1}_condition");
+            builder.AppendLine();
 
             builder.AppendLine($"\tIf_{currentIfId}_{currentElseCount}_body:");
             VisitChildren(node, 1);
             builder.AppendLine($"\t\tbr If_{currentIfId}_End");
+            builder.AppendLine();
         }
         public void Visit(ElseStatementNode node)
         {
@@ -562,22 +559,14 @@ namespace Chimera
             switch (row.type)
             {
                 case Type.BOOL:
-                    if (row.value == true)
-                    {
-                        return $"ldc.i4.1";
-                    }
-                    else
-                    {
-                        return $"ldc.i4.0";
-                    }
+                    var b = row.value ? 1 : 0;
+                    return $"ldc.i4.{b}";
                 case Type.INT:
                     return $"ldc.i4 {row.value}";
                 case Type.STRING:
-                    if (row.value == null || row.value == "")
-                    {
-                        return $"ldstr \"\"";
-                    }
-                    return $"ldstr {row.value}";
+                    string s = row.value;
+                    s = s.Count() == 0 ? "\"\"" : s;
+                    return $"ldstr {s}";
                 case Type.BOOL_LIST:
                     bool[] constBoolArr = row.value as bool[];
                     result.AppendLine($"ldc.i4 {constBoolArr.Length}");
@@ -636,7 +625,6 @@ namespace Chimera
                 _prefix = "['Chimera']'ChimeraProgram'";
             }
 
-            Console.WriteLine(procedureName);
             VisitChildren(node);
             builder.Append($"\t\tcall {returnType} class {_prefix}::'{procedureName}'(");
             var _params = GetParams(procedureName);

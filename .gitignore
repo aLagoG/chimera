@@ -230,3 +230,4 @@ ignore/
 *.il
 *.txt
 *.dll
+*.ast

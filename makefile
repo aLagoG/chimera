@@ -13,4 +13,8 @@ ChimeraLib.dll: ChimeraLib.cs
 	mcs -t:library ChimeraLib.cs -out:ChimeraLib.dll
 
 clean:
-	rm chimera*.exe chimera*.exe.mdb
+	rm -f *.exe
+	rm -f *.exe.mdb
+	rm -f **/*.ast
+	rm -f **/*.il
+	rm -f *.dll
