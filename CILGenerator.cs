@@ -475,7 +475,7 @@ namespace Chimera
             Type type = procedureTable[procedureName].type;
             if (type != Type.VOID)
             {
-                builder.AppendLine("pop");
+                builder.AppendLine("\t\tpop");
             }
         }
         public void Visit(CallNode node)
